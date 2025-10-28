@@ -1,0 +1,10 @@
+
+# Sprint 1 - Backend Requirements File
+
+fastapi # The main web framework for building our API.
+pydantic[email] # For data validation and settings management.
+uvicorn[standard]  # The ASGI server that runs our FastAPI application.
+motor # For ASYNCHRONOUS connecting to MongoDB (replaces pymongo)
+bcrypt # Used for securely hashing and verifying user passwords (NFR-S1).
+python-jose[cryptography] # Used to create and validate JSON Web Tokens (JWTs) for auth (FR1.1).
+python-multipart # Required by FastAPI to parse form data (used in our /login route).
