@@ -1,4 +1,4 @@
-# Sprint 1 - Backend Requirements File
+
 
 fastapi # The main web framework for building our API.
 pydantic[email] # For data validation and settings management.
@@ -10,3 +10,4 @@ python-multipart # Required by FastAPI to parse form data (used in our /login ro
 pandas # For reading local CSV/JSON files (e.g., mock tariffs, UKPN data)
 numpy # For efficient numerical calculations in the OptimisationEngine.
 pytest # The framework for running our unit tests.
+redis[hiredis] # The async Python client for our Redis cache (NFR-P2).
