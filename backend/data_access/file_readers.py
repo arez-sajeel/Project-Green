@@ -1,10 +1,13 @@
+
+# backend/data_access/file_readers.py
+
 # This file implements the base drivers for reading local files (CSV/JSON),
 # as specified in Task 1.b.
 # This adheres to the "Modularity (Data Access Layer)" coding standard.
 # It uses pandas for efficient file parsing.
 
 import pandas as pd
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional # FIX: Added 'Optional'
 import sys
 
 def load_mock_tariffs_from_csv(file_path: str) -> List[Dict[str, Any]]:
@@ -56,3 +59,4 @@ def load_ukpn_data(file_path: str) -> Optional[pd.DataFrame]:
     except Exception as e:
         print(f"An unexpected error occurred reading {file_path}: {e}", file=sys.stderr)
         return None
+

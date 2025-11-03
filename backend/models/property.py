@@ -1,11 +1,17 @@
+
+# backend/models/property.py
+
 # This file defines the Pydantic models for the core domain entities:
 # Property, Device, Homeowner, and PropertyManager.
-# These models map to the UML Class Diagram and support core functional requirements
-# like FR1.3 (Property Data) and FR4.1 (Device Shifting).
+#
+# MODIFIED (Sprint 2):
+# - Imports are now absolute (backend.models.user)
+# - Homeowner/PropertyManager now include 'hashed_password'
+#   so that they can be used for authentication.
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
-from .user import UserBase, UserRole # Relative import from models/user.py
+from backend.models.user import UserBase, UserRole # FIX: Absolute import
 
 class Device(BaseModel):
     """
@@ -24,6 +30,8 @@ class Property(BaseModel):
     Maps to the Property class in the UML diagram.
     This document will be the central record for a single property.
     """
+    # Use Field(...) for aliasing the MongoDB '_id' field if needed
+    # For now, we'll assume a separate property_id
     property_id: int         # Primary key for a Property
     address: str
     location: str
@@ -44,16 +52,26 @@ class Homeowner(UserBase):
     Represents a Homeowner user.
     Inherits from UserBase and fixes the role to HOMEOWNER.
     Links directly to one Property, as per the UML.
-    This model defines the data structure for a Homeowner.
+    This model defines the *full user document* in the 'users' collection.
     """
     role: UserRole = UserRole.HOMEOWNER
     property_id: int # Foreign key linking to the Property this user owns
+    
+    # FIX: This field is required for the login logic to verify the password.
+    # It will not be exposed in API responses.
+    hashed_password: str
 
 class PropertyManager(UserBase):
     """
     Represents a Property Manager user (FR2.4).
     Inherits from UserBase and fixes the role to PROPERTY_MANAGER.
     Links to a portfolio_id, which groups multiple Properties.
+    This model defines the *full user document* in the 'users' collection.
     """
     role: UserRole = UserRole.PROPERTY_MANAGER
     portfolio_id: int # ID for the portfolio this user manages
+    
+    # FIX: This field is required for the login logic to verify the password.
+    # It will not be exposed in API responses.
+    hashed_password: str
+
