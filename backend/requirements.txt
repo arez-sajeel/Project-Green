@@ -8,3 +8,5 @@ bcrypt # Used for securely hashing and verifying user passwords (NFR-S1).
 python-jose[cryptography] # Used to create and validate JSON Web Tokens (JWTs) for auth (FR1.1).
 python-multipart # Required by FastAPI to parse form data (used in our /login route).
 pandas # For reading local CSV/JSON files (e.g., mock tariffs, UKPN data)
+numpy # For efficient numerical calculations in the OptimisationEngine.
+pytest # The framework for running our unit tests.
