@@ -88,15 +88,43 @@ class OptimisationEngine:
             return True
         return False
 
+    # --- START OF MODIFICATION (SPRINT 2.c) ---
     def create_timestamped_curve(self, usage_logs: List[HistoricalUsageLog]) -> pd.DataFrame:
         """
-        Stub for [Sprint 2: Create Baseline Curve].
-        Converts raw log data into a structured Pandas DataFrame for analysis.
+        Implementation for [Sprint 2: Create Baseline Curve].
+        
+        Converts raw log data into a structured Pandas DataFrame and
+        calculates the cost for each timestamp using the class's tariff.
+        This fulfils the "Cost Before Scenario" requirement.
         """
-        # In a real implementation, this would involve complex pandas logic.
-        # For the stub, we return an empty, structured DataFrame.
-        print("Stub: Creating baseline curve...")
-        return pd.DataFrame(columns=["timestamp", "kwh_consumption", "kwh_cost"])
+        # Adhering to P2 (Readability), we build a simple list of
+        # dictionaries first, which is a clear way to construct a DataFrame.
+        data_for_df = []
+        
+        for log in usage_logs:
+            # Use the `calculate_cost` method from the Tariff model (Step 1)
+            # We use `self.tariff` as the engine is initialised with it.
+            calculated_cost = self.tariff.calculate_cost(
+                kwh_consumption=log.kwh_consumption,
+                timestamp=log.timestamp
+            )
+            
+            data_for_df.append({
+                "timestamp": log.timestamp,
+                "kwh_consumption": log.kwh_consumption,
+                "kwh_cost": calculated_cost # This is the newly calculated cost
+            })
+        
+        # Convert the list of data into a DataFrame
+        curve_df = pd.DataFrame(data_for_df)
+        
+        # Set the timestamp as the index for easier time-series analysis
+        # in Sprint 3.
+        if not curve_df.empty:
+            curve_df.set_index("timestamp", inplace=True)
+            
+        return curve_df
+    # --- END OF MODIFICATION (SPRINT 2.c) ---
 
     # --- Sprint 3: Calculation Methods ---
     
