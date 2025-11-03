@@ -72,14 +72,14 @@ def mock_usage_logs() -> List[HistoricalUsageLog]:
             timestamp=datetime(2025, 1, 1, 18, 0), # 6 PM (Peak)
             mpan_id="12345",
             kwh_consumption=2.0,
-            kwh_cost=60.0, # 2.0 * 30.0
+            kwh_cost=0.0, # Original cost is 0.0, to be calculated
             reading_type="A"
         ),
         HistoricalUsageLog(
             timestamp=datetime(2025, 1, 1, 3, 0), # 3 AM (Off-Peak)
             mpan_id="12345",
             kwh_consumption=0.5,
-            kwh_cost=5.0, # 0.5 * 10.0
+            kwh_cost=0.0, # Original cost is 0.0, to be calculated
             reading_type="A"
         )
     ]
@@ -182,3 +182,39 @@ def test_run_scenario_prediction_stub(engine, mock_device_shiftable):
             original_time=start_time,
             new_time=end_time
         )
+
+# --- START OF NEW TEST (SPRINT 2.c) ---
+
+def test_create_timestamped_curve(engine, mock_usage_logs):
+    """
+    Tests the implementation for [Sprint 2: Create Baseline Curve].
+    
+    This test validates that the `create_timestamped_curve` method
+    correctly loops through raw logs and uses the `Tariff.calculate_cost`
+    method (tested in Step 1) to build the baseline cost curve.
+    
+    Links to: Test Plan 2.5: test_create_timestamped_curve
+    """
+    # GIVEN: The 'engine' fixture, which has a mock tariff and
+    # two mock usage logs (one peak, one off-peak).
+    
+    # WHEN: We call the method to create the baseline curve
+    baseline_curve_df = engine.create_timestamped_curve(mock_usage_logs)
+    
+    # THEN: The DataFrame should be correctly calculated.
+    
+    # 1. Check the DataFrame isn't empty
+    assert not baseline_curve_df.empty
+    
+    # 2. Check that our new cost column exists
+    assert "kwh_cost" in baseline_curve_df.columns
+    
+    # 3. Check the calculated costs are correct based on our fixtures:
+    #    Log 1 (Peak): 2.0 kWh * 30.0p/kWh = 60.0
+    #    Log 2 (Off-Peak): 0.5 kWh * 10.0p/kWh = 5.0
+    expected_costs = [60.0, 5.0]
+    
+    # We use .tolist() to compare the values inside the Pandas Series
+    assert baseline_curve_df["kwh_cost"].tolist() == expected_costs
+
+# --- END OF NEW TEST ---
