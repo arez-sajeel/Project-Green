@@ -3,10 +3,9 @@
 # This adheres to the "Modularity (Data Access Layer)" coding standard.
 # All functions are async and include explicit error handling (NFR-S3).
 # ---
-# MODIFIED FOR SPRINT 2 (Fetch User Context):
-# - Added `get_user_context_data` function.
-# - This new function orchestrates all DB queries needed for the
-#   /context/ endpoint, enforcing NFR-S2 (Access Control).
+# MODIFIED FOR SPRINT 2 (Task 2.2):
+# - Added `bulk_insert_usage_logs` function to persist
+#   the simulated data from the file reader on startup.
 # ---
 
 import sys
@@ -14,7 +13,7 @@ from datetime import datetime
 from typing import List, Optional, Union, Dict, Set, Tuple
 import typing  # Required for 'typing.cast'
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from pymongo.errors import PyMongoError
+from pymongo.errors import PyMongoError, BulkWriteError # NEW: Import BulkWriteError
 from fastapi import HTTPException
 from starlette import status
 
@@ -225,3 +224,51 @@ async def get_usage_logs(
         print(f"Error retrieving usage logs for {mpan_id}: {e}", file=sys.stderr)
         return [] # Return empty list on error
 
+# --- NEW (Sprint 2, Task 2.2) ---
+
+async def bulk_insert_usage_logs(
+    db: AsyncIOMotorDatabase, 
+    logs: List[HistoricalUsageLog]
+) -> int:
+    """
+    Inserts a large list of HistoricalUsageLog documents into the
+    'usage_logs' collection.
+    
+    This is used by Task 2.2 (Load Usage Data) on app startup.
+    Uses `insert_many` for high performance (NFR-P1).
+    Adheres to P3/NFR-S3 for error handling.
+    
+    Returns:
+        The number of documents successfully inserted.
+    """
+    if not logs:
+        print("Task 2.2: No usage logs provided for bulk insert.", file=sys.stdout)
+        return 0
+        
+    print(f"Task 2.2: Attempting to bulk insert {len(logs)} usage logs...", file=sys.stdout)
+    
+    try:
+        # 1. Convert Pydantic models to a list of dictionaries
+        # We use a simple list comprehension for clarity and speed (P2)
+        log_dicts = [log.model_dump() for log in logs]
+        
+        # 2. Perform the bulk insert
+        # 'ordered=False' means it will try to insert all documents
+        # even if one fails (more robust for NFR-S3).
+        result = await db["usage_logs"].insert_many(log_dicts, ordered=False)
+        
+        inserted_count = len(result.inserted_ids)
+        print(f"Task 2.2: Successfully inserted {inserted_count} usage logs.", file=sys.stdout)
+        return inserted_count
+        
+    except BulkWriteError as e:
+        # This catches errors during the bulk operation
+        print(f"Error (Task 2.2): Bulk write error: {e.details}", file=sys.stderr)
+        # We can still return the count of *successful* inserts
+        return e.details.get('nInserted', 0)
+    except PyMongoError as e:
+        print(f"Error (Task 2.2): A database error occurred during bulk insert: {e}", file=sys.stderr)
+        return 0
+    except Exception as e:
+        print(f"Error (Task 2.2): An unexpected error occurred: {e}", file=sys.stderr)
+        return 0
