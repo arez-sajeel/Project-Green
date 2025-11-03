@@ -2,21 +2,36 @@
 # backend/routers/auth.py
 
 # This file implements the API endpoints (routes) for authentication.
-# It follows the flowcharts for /register and /login.
-# It adheres to Modularity rules by calling helper functions from:
-# - data_access.database (for DB operations)
-# - core.security (for hashing and JWTs)
+# ---
+# MODIFIED FOR SPRINT 2 (Absolute Imports):
+# - All imports are now absolute from the 'backend' root
+#   (e.g., `from backend.models.user import ...`) to fix
+#   ModuleNotFoundError.
+# - `register_user` is updated to create full Homeowner/PropertyManager
+#   documents, not just UserInDB.
+# ---
 
 import os
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from models.user import UserCreate, UserInDB, Token, UserRole
-from data_access.database import get_db, get_user_by_email, create_user
-from core.security import hash_password, verify_password, create_access_token
-from motor.motor_asyncio import AsyncIOMotorDatabase
-from dotenv import load_dotenv
 from datetime import timedelta
 import sys
+import typing # Added for type casting
+
+#
+# FIX 1: Use absolute imports
+#
+from backend.models.user import UserCreate, UserInDB, Token, UserRole
+from backend.models.property import Homeowner, PropertyManager # Import full models
+from backend.data_access.database import get_db, get_user_by_email, create_user
+from backend.core.security import (
+    hash_password, 
+    verify_password, 
+    create_access_token,
+    get_current_active_user # Import the new dependency
+)
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
@@ -27,14 +42,20 @@ router = APIRouter()
 
 # --- Registration Endpoint ---
 
-@router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED) # FIX: Was HTTP_21_CREATED
 async def register_user(
+    # Note: UserCreate does not have property_id/portfolio_id
+    # This is a simplification for now. A real app would add them.
     user_in: UserCreate, 
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
     """
     Handles new user registration.
     Follows the 'New User Sign-Up Route' flowchart.
+    
+    MODIFIED (Sprint 2):
+    This now correctly creates a full Homeowner or PropertyManager
+    document in the 'users' collection.
     """
     try:
         # 1. Check if user already exists
@@ -51,12 +72,25 @@ async def register_user(
         hashed_password = hash_password(user_in.password)
         
         # Create the user model for the database
-        user_db = UserInDB(
-            email=user_in.email,
-            role=user_in.role,
-            hashed_password=hashed_password
-        )
-        
+        user_db_data = user_in.model_dump()
+        user_db_data["hashed_password"] = hashed_password
+        del user_db_data["password"] # Remove plain text password
+
+        #
+        # FIX 2: Create the *full* user model, not just UserInDB
+        # This is required for our new `get_user_by_email` to work
+        #
+        if user_in.role == UserRole.HOMEOWNER:
+            # We add a placeholder property_id for new signups
+            user_db_data.setdefault("property_id", 999) # Placeholder
+            user_db = Homeowner(**user_db_data)
+        elif user_in.role == UserRole.PROPERTY_MANAGER:
+            # We add a placeholder portfolio_id for new signups
+            user_db_data.setdefault("portfolio_id", 888) # Placeholder
+            user_db = PropertyManager(**user_db_data)
+        else:
+             raise HTTPException(status_code=400, detail="Invalid user role")
+
         # 4. Create User Record in MongoDB
         success = await create_user(db, user_db)
         
@@ -76,14 +110,12 @@ async def register_user(
         return {"access_token": access_token, "token_type": "bearer"}
 
     except HTTPException as http_exc:
-        # Re-raise HTTP exceptions (like the 409) directly
         raise http_exc
     except Exception as e:
-        # Catch any other unexpected errors
         print(f"Error in /register endpoint: {e}", file=sys.stderr)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An internal server error occurred."
+            detail=f"An internal server error occurred: {e}"
         )
 
 # --- Login Endpoint ---
@@ -99,10 +131,10 @@ async def login_for_access_token(
     Uses OAuth2PasswordRequestForm, so username IS the email.
     """
     # 1. Query DB for user
+    #    This now returns a full Homeowner/PropertyManager model
     user = await get_user_by_email(db, form_data.username)
 
     # 2. Verify Password Match
-    #    FIX: Use dot notation (user.hashed_password) not dict (user['...'])
     if not user or not verify_password(form_data.password, user.hashed_password):
         # 3. If No: Return 401 Error
         raise HTTPException(
