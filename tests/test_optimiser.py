@@ -5,17 +5,13 @@
 
 import pytest
 from datetime import datetime
-from fastapi import HTTPException # <-- MODIFIED (S2.4): For testing errors
 
 # --- Imports updated for absolute path from root ---
 from backend.engine.optimiser import OptimisationEngine
 from backend.models.property import Property, Device
 from backend.models.tariff import Tariff
 from backend.models.usage import HistoricalUsageLog
-from typing import List
-# --- START OF MODIFICATION (SPRINT 2.4) ---
-from backend.models.scenario import ShiftValidationRequest
-# --- END OF MODIFICATION (SPRINT 2.4) ---
+from typing import List # Added missing import
 
 # --- Mock Data Setup (Fixtures) ---
 # These fixtures provide mock data as defined in the Test Strategy (Test Plan 1.0)
@@ -111,33 +107,12 @@ def engine(mock_property, mock_tariff, mock_usage_logs) -> OptimisationEngine:
         usage_data=mock_usage_logs
     )
 
-# --- START OF MODIFICATION (SPRINT 2.4) ---
-@pytest.fixture
-def mock_shift_request(mock_device_shiftable) -> ShiftValidationRequest:
-    """A mock scenario request for the shiftable device."""
-    return ShiftValidationRequest(
-        device_id=mock_device_shiftable.device_id,
-        original_timestamp=datetime(2025, 1, 1, 18, 0), # 6 PM (Peak)
-        new_timestamp=datetime(2025, 1, 2, 4, 0)      # 4 AM (Off-peak)
-    )
-
-@pytest.fixture
-def mock_shift_request_invalid_device() -> ShiftValidationRequest:
-    """A mock scenario request for a device that doesn't exist."""
-    return ShiftValidationRequest(
-        device_id=999, # Fake device
-        original_timestamp=datetime(2025, 1, 1, 18, 0),
-        new_timestamp=datetime(2025, 1, 2, 4, 0)
-    )
-# --- END OF MODIFICATION (SPRINT 2.4) ---
-
-
 # --- Unit Tests ---
 
 def test_engine_initialisation(engine, mock_property, mock_tariff, mock_usage_logs):
     """
     Tests that the engine class initialises correctly.
-    (Task 1.d: Engine Class Setup)
+    (Task 4.a: Engine Class Setup)
     
     Links to: Test Plan 2.1: test_engine_initialisation
     """
@@ -148,7 +123,7 @@ def test_engine_initialisation(engine, mock_property, mock_tariff, mock_usage_lo
 
 def test_calculate_final_savings_stub(engine):
     """
-    Tests the logic for [Task 4a: Calculate Final Savings].
+    Tests the stub logic for [Task 4a: Calculate Final Savings].
     
     Links to: Test Plan 2.3: test_calculate_final_savings_stub
     """
@@ -158,83 +133,78 @@ def test_calculate_final_savings_stub(engine):
     
     savings = engine.calculate_final_savings(baseline_cost, scenario_cost)
     
-    # The logic is (baseline_cost - scenario_cost)
+    # The stub logic is (baseline_cost - scenario_cost)
     assert savings == 40.50
     # Check that the engine's internal state was also set
     assert engine.estimated_savings == 40.50
 
-# --- START OF MODIFICATION (SPRINT 2.4) ---
 def test_validate_shift_input(engine, mock_device_shiftable, mock_device_non_shiftable):
     """
     Tests the logic for [Sprint 2: Validate Shift Input].
     
     Links to: Test Plan 2.2: test_validate_shift_input
-    
-    MODIFIED (S2.4):
-    - Tests the new implementation which returns a Device
-      object or raises an HTTPException (NFR-S3).
     """
+    dummy_time = datetime(2025, 1, 2, 4, 0) # 4 AM
     
-    # Test 1 (Happy Path): A shiftable device should return the Device object
-    validated_device = engine.validate_shift_input(
-        device_id=mock_device_shiftable.device_id
+    # Test 1 (Happy Path): A shiftable device should return True
+    can_shift = engine.validate_shift_input(
+        device_id=mock_device_shiftable.device_id,
+        new_time=dummy_time
     )
-    assert validated_device == mock_device_shiftable
+    assert can_shift == True
     
-    # Test 2 (Unhappy Path): A non-shiftable device should raise 400
-    with pytest.raises(HTTPException) as e:
-        engine.validate_shift_input(
-            device_id=mock_device_non_shiftable.device_id
-        )
-    assert e.value.status_code == 400
-    assert "not shiftable" in e.value.detail
+    # Test 2 (Unhappy Path): A non-shiftable device should return False
+    cant_shift = engine.validate_shift_input(
+        device_id=mock_device_non_shiftable.device_id,
+        new_time=dummy_time
+    )
+    assert cant_shift == False
     
-    # Test 3 (Error Path): A device that doesn't exist should raise 404
-    with pytest.raises(HTTPException) as e:
-        engine.validate_shift_input(device_id=999)
-    assert e.value.status_code == 404
-    assert "not found" in e.value.detail
+    # Test 3 (Error Path): A device that doesn't exist should return False
+    fake_device = engine.validate_shift_input(
+        device_id=999,
+        new_time=dummy_time
+    )
+    assert fake_device == False
 
-def test_run_scenario_prediction_stub(engine, mock_shift_request, mock_shift_request_invalid_device):
+def test_run_scenario_prediction_stub(engine, mock_device_shiftable, peak_time): # Modified
     """
     Tests the main orchestration stub [Sprint 4: Orchestrate API Endpoint].
+    This confirms the dummy values flow through the stubs correctly
+    and that error handling (NFR-S3) is working.
     
     Links to: Test Plan 2.4: test_run_scenario_prediction_stub
-    
-    MODIFIED (S2.4):
-    - Passes the new ShiftValidationRequest model.
-    - Confirms that HTTPExceptions from validation bubble up (NFR-S3).
     """
+    start_time = peak_time # Use fixture: 6 PM
+    end_time = datetime(2025, 1, 2, 4, 0)   # 4 AM
     
     # Test 1 (Happy Path): Run the main orchestrator
     result = engine.run_scenario_prediction(
-        request=mock_shift_request
+        device_id=mock_device_shiftable.device_id,
+        original_time=start_time,
+        new_time=end_time
     )
     
     # Because all our calculation stubs return 0.0, the final
     # savings should also be 0.0
     assert result["estimated_savings"] == 0.0
     
-    # Test 2 (Error Path): Check that an HTTPException is raised
-    # for an invalid device.
-    with pytest.raises(HTTPException) as e:
+    # Test 2 (Error Path): Check that a ValueError is raised for an invalid device
+    with pytest.raises(ValueError, match="Invalid shift"):
         engine.run_scenario_prediction(
-            request=mock_shift_request_invalid_device
+            device_id=999, # Fake device
+            original_time=start_time,
+            new_time=end_time
         )
-    # Check that the exception from validate_shift_input bubbles up
-    assert e.value.status_code == 404
-# --- END OF MODIFICATION (SPRINT 2.4) ---
-
 
 # --- Test from Sprint 2.c (Unchanged) ---
-
 def test_create_timestamped_curve(engine, mock_usage_logs):
     """
     Tests the implementation for [Sprint 2: Create Baseline Curve].
     
     This test validates that the `create_timestamped_curve` method
     correctly loops through raw logs and uses the `Tariff.calculate_cost`
-    method to build the baseline cost curve.
+    method (tested in Step 1) to build the baseline cost curve.
     
     Links to: Test Plan 2.5: test_create_timestamped_curve
     """
@@ -259,3 +229,47 @@ def test_create_timestamped_curve(engine, mock_usage_logs):
     
     # We use .tolist() to compare the values inside the Pandas Series
     assert baseline_curve_df["kwh_cost"].tolist() == expected_costs
+
+# --- START OF NEW TEST (SPRINT 3.2) ---
+
+def test_simulate_load_subtraction(engine, mock_device_shiftable, peak_time, off_peak_time):
+    """
+    Tests the implementation for [Sprint 3: Simulate Load Subtraction].
+    
+    This test validates that the method correctly subtracts a device's
+    load from a single timestamp and recalculates the cost for that row.
+    
+    Links to: Test Plan 3.2: test_simulate_load_subtraction (New)
+    """
+    # GIVEN:
+    # 1. The baseline curve (which we know is correct from the test above)
+    baseline_curve = engine.create_timestamped_curve(engine.raw_usage_logs)
+    # 2. The mock shiftable device (1.5 kW)
+    # 3. The peak timestamp (6 PM)
+    
+    # WHEN:
+    # We simulate subtracting the device's load from the peak time
+    subtracted_curve = engine.simulate_load_subtraction(
+        usage_curve=baseline_curve,
+        device_id=mock_device_shiftable.device_id,
+        time=peak_time
+    )
+    
+    # THEN:
+    # 1. Calculate the expected new values for the PEAK time
+    # Energy to subtract = 1.5 kW * 0.5 h = 0.75 kWh
+    # New Consumption = 2.0 kWh (original) - 0.75 kWh = 1.25 kWh
+    # New Cost = 1.25 kWh * 30.0p/kWh (peak rate) = 37.5
+    
+    # 2. Check the PEAK row (6 PM)
+    peak_row = subtracted_curve.loc[peak_time]
+    assert peak_row['kwh_consumption'] == 1.25
+    assert peak_row['kwh_cost'] == 37.5
+    
+    # 3. Check the OFF-PEAK row (3 AM) to ensure it was NOT changed
+    off_peak_row = subtracted_curve.loc[off_peak_time]
+    assert off_peak_row['kwh_consumption'] == 0.5 # Unchanged from original
+    assert off_peak_row['kwh_cost'] == 5.0     # Unchanged from original
+
+# --- END OF NEW TEST ---
+
