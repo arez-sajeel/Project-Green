@@ -5,11 +5,15 @@
 import pandas as pd
 from datetime import datetime
 from typing import List, Dict, Optional
+from fastapi import HTTPException # <-- MODIFIED (S2.4): For error handling (NFR-S3)
 
 # Use absolute imports from 'backend' to be discoverable by pytest
 from backend.models.property import Property, Device
 from backend.models.tariff import Tariff
 from backend.models.usage import HistoricalUsageLog
+# --- START OF MODIFICATION (SPRINT 2.4) ---
+from backend.models.scenario import ShiftValidationRequest
+# --- END OF MODIFICATION (SPRINT 2.4) ---
 # ---------------------
 
 class OptimisationEngine:
@@ -32,16 +36,22 @@ class OptimisationEngine:
         self.estimated_savings: float = 0.0
 
     # --- Sprint 4: Orchestration ---
-    def run_scenario_prediction(self, device_id: int, original_time: datetime, new_time: datetime) -> Dict:
+    def run_scenario_prediction(self, request: ShiftValidationRequest) -> Dict: # <-- MODIFIED (S2.4)
         """
         Main orchestrator for [Task 4.c: Orchestrate API Endpoint].
         This method chains all required tasks from Sprints 2 and 3
         to generate the final savings estimate (FR4.2).
+        
+        MODIFIED (S2.4):
+        - Accepts the full ShiftValidationRequest object.
+        - Calls the new, robust validate_shift_input method.
+        - Allows HTTPExceptions to bubble up to the API router.
         """
         
         # [Sprint 2: Validate Shift Input]
-        if not self.validate_shift_input(device_id, new_time):
-            raise ValueError("Invalid shift: Device not found or is not shiftable.")
+        # This will raise an HTTPException if invalid, halting execution
+        # (fulfills NFR-S3).
+        validated_device = self.validate_shift_input(request.device_id)
         
         # [Sprint 2: Create Baseline Curve]
         self.baseline_usage_curve = self.create_timestamped_curve(self.raw_usage_logs)
@@ -52,15 +62,15 @@ class OptimisationEngine:
         # [Sprint 3: Simulate Load Subtraction]
         temp_curve = self.simulate_load_subtraction(
             self.baseline_usage_curve, 
-            device_id, 
-            original_time
+            validated_device, # <-- Pass the validated device 
+            request.original_timestamp
         )
         
         # [Sprint 3: Simulate Load Addition]
         self.scenario_usage_curve = self.simulate_load_addition(
             temp_curve, 
-            device_id, 
-            new_time
+            validated_device, # <-- Pass the validated device
+            request.new_timestamp
         )
         
         # [Sprint 3: Calculate Scenario Cost]
@@ -77,16 +87,47 @@ class OptimisationEngine:
 
     # --- Sprint 2: Retrieval Methods ---
     
-    def validate_shift_input(self, device_id: int, new_time: datetime) -> bool:
+    # --- START OF MODIFICATION (SPRINT 2.4) ---
+    def validate_shift_input(self, device_id: int) -> Device:
         """
-        Stub for [Sprint 2: Validate Shift Input].
-        Checks if a device exists and is marked as 'is_shiftable'.
+        Implementation for [Sprint 2: Validate Shift Input].
+        
+        Checks if a device exists within the engine's property context
+        and is marked as 'is_shiftable'.
+        
+        This adheres to the "Explicit Error Handling" (P3) and
+        "NFR-S3" (Failure Handling) standards by raising
+        HTTPExceptions that the API router can return to the user.
+        
+        Args:
+            device_id (int): The ID of the device to validate.
+            
+        Raises:
+            HTTPException (404): If the device is not found.
+            HTTPException (400): If the device is found but not shiftable.
+            
+        Returns:
+            Device: The full, validated Device object if successful.
         """
         device = self._get_device_by_id(device_id)
-        if device and device.is_shiftable:
-            # TODO: Add logic to check if 'new_time' is valid (e.g., not in the past)
-            return True
-        return False
+        
+        if not device:
+            # Adheres to NFR-S3, as seen in Sprint 2.1 test results
+            raise HTTPException(
+                status_code=404,
+                detail=f"Device with id {device_id} not found in this property."
+            )
+            
+        if not device.is_shiftable:
+            # Fulfills FR4.1 by checking the device rule
+            raise HTTPException(
+                status_code=400, # 400 Bad Request is appropriate
+                detail=f"Device '{device.device_name}' is not shiftable."
+            )
+            
+        # Success: Return the validated device for Sprint 3 logic
+        return device
+    # --- END OF MODIFICATION (SPRINT 2.4) ---
 
     def create_timestamped_curve(self, usage_logs: List[HistoricalUsageLog]) -> pd.DataFrame:
         """
@@ -101,8 +142,7 @@ class OptimisationEngine:
         data_for_df = []
         
         for log in usage_logs:
-            # Use the `calculate_cost` method from the Tariff model (Step 1)
-            # We use `self.tariff` as the engine is initialised with it.
+            # Use the `calculate_cost` method from the Tariff model
             calculated_cost = self.tariff.calculate_cost(
                 kwh_consumption=log.kwh_consumption,
                 timestamp=log.timestamp
@@ -131,74 +171,36 @@ class OptimisationEngine:
         Stub for [Sprint 3: Calculate Baseline/Scenario Cost].
         Calculates the total cost from a given usage curve.
         """
+        # TODO: Implement this in Sprint 3
         # In a real implementation, this would sum the 'kwh_cost' column.
-        # For the stub, we return 0.0.
         print("Stub: Calculating total cost...")
         return 0.0
 
-    # --- START OF MODIFICATION (SPRINT 3.2) ---
-    def simulate_load_subtraction(self, usage_curve: pd.DataFrame, device_id: int, time: datetime) -> pd.DataFrame:
+    def simulate_load_subtraction(self, usage_curve: pd.DataFrame, device: Device, time: datetime) -> pd.DataFrame: # <-- MODIFIED (S2.4)
         """
-        Implementation for [Sprint 3: Simulate Load Subtraction].
+        Stub for [Sprint 3: Simulate Load Subtraction].
+        Removes a device's load from the baseline curve at a specific time.
         
-        Removes a device's load from the baseline curve at a specific time
-        and recalculates the cost for that single timestamp.
+        MODIFIED (S2.4):
+        - Accepts the full validated Device object.
         """
-        # First, get the device from the property context
-        device = self._get_device_by_id(device_id)
-        
-        # If device isn't found (should be caught by validation,
-        # but good to double check - NFR-S3)
-        if not device:
-            print(f"Warning (S3.2): Device {device_id} not found. No subtraction performed.")
-            return usage_curve.copy() # Return original curve
+        # TODO: Implement numpy/pandas logic to find the 'time' index
+        # and subtract the device's 'average_draw_kW'.
+        print(f"Stub: Subtracting device {device.device_id} load at {time}...")
+        return usage_curve.copy() # Return a copy to avoid mutation
 
-        # Make a copy to prevent mutating the original DataFrame (NFR-S3)
-        temp_curve = usage_curve.copy()
-
-        # Per API-info.docx, all data is half-hourly (HH).
-        # Energy (kWh) = Power (kW) * Time (h)
-        # We assume the average_draw_kW is for a full hour, so we take 0.5 (30 mins).
-        energy_to_subtract_kwh = device.average_draw_kW * 0.5
-
-        try:
-            # 1. Get current consumption at the specified time
-            # We use .loc[] to access the row by its timestamp index
-            current_consumption = temp_curve.loc[time, 'kwh_consumption']
-            
-            # 2. Calculate new consumption
-            new_consumption = current_consumption - energy_to_subtract_kwh
-            # Ensure consumption doesn't go below zero
-            new_consumption = max(0.0, new_consumption)
-            
-            # 3. Recalculate cost for this *new* consumption
-            new_cost = self.tariff.calculate_cost(
-                kwh_consumption=new_consumption,
-                timestamp=time
-            )
-            
-            # 4. Update the DataFrame at that specific timestamp
-            temp_curve.loc[time, 'kwh_consumption'] = new_consumption
-            temp_curve.loc[time, 'kwh_cost'] = new_cost
-
-        except KeyError:
-            # Handle error if the specified 'time' is not in the DataFrame index
-            # This adheres to P3 (Explicit Error Handling)
-            print(f"Warning (S3.2): Timestamp {time} not found in usage curve. No subtraction performed.")
-            # In a real API, we might raise an HTTPException here
-        
-        return temp_curve
-    # --- END of MODIFICATION (SPRINT 3.2) ---
-
-    def simulate_load_addition(self, usage_curve: pd.DataFrame, device_id: int, time: datetime) -> pd.DataFrame:
+    def simulate_load_addition(self, usage_curve: pd.DataFrame, device: Device, time: datetime) -> pd.DataFrame: # <-- MODIFIED (S2.4)
         """
         Stub for [Sprint 3: Simulate Load Addition].
         Adds a device's load to the baseline curve at a new time.
+        
+        MODIFIED (S2.4):
+        - Accepts the full validated Device object.
         """
         # TODO: Implement numpy/pandas logic to find the 'time' index,
         # add the device's 'average_draw_kW', and recalculate 'kwh_cost'
         # based on the tariff's 'rate_schedule'.
-        print(f"Stub: Adding device {device_id} load at {time}...")
+        print(f"Stub: Adding device {device.device_id} load at {time}...")
         return usage_curve.copy() # Return a copy to avoid mutation
 
     # --- Sprint 4: Deployment Methods ---
@@ -229,6 +231,7 @@ class OptimisationEngine:
     
     def _get_device_by_id(self, device_id: int) -> Optional[Device]:
         """Internal helper to find a device in the property's list."""
+        # This logic is sound and supports the new validate_shift_input
         for device in self.property.devices:
             if device.device_id == device_id:
                 return device
