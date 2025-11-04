@@ -236,3 +236,4 @@ class OptimisationEngine:
             if device.device_id == device_id:
                 return device
         return None
+

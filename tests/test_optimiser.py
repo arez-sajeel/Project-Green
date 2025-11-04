@@ -26,7 +26,7 @@ def mock_device_shiftable() -> Device:
     return Device(
         device_id=1,
         device_name="Washing Machine",
-        average_draw_kW=1.5,
+        average_draw_kW=1.5, # 1.5 kW
         is_shiftable=True
     )
 
@@ -68,19 +68,33 @@ def mock_tariff() -> Tariff:
         }
     )
 
+# --- START OF MODIFICATION (SPRINT 3.2) ---
+# We create fixtures for our key timestamps to keep tests DRY
 @pytest.fixture
-def mock_usage_logs() -> List[HistoricalUsageLog]:
+def peak_time() -> datetime:
+    """A mock peak time (6 PM)."""
+    return datetime(2025, 1, 1, 18, 0)
+
+@pytest.fixture
+def off_peak_time() -> datetime:
+    """A mock off-peak time (3 AM)."""
+    return datetime(2025, 1, 1, 3, 0)
+# --- END OF MODIFICATION (SPRINT 3.2) ---
+
+
+@pytest.fixture
+def mock_usage_logs(peak_time, off_peak_time) -> List[HistoricalUsageLog]: # Modified
     """A list of mock usage logs (FR2.5)."""
     return [
         HistoricalUsageLog(
-            timestamp=datetime(2025, 1, 1, 18, 0), # 6 PM (Peak)
+            timestamp=peak_time, # Use fixture: 6 PM (Peak)
             mpan_id="12345",
             kwh_consumption=2.0,
             kwh_cost=0.0, # Original cost is 0.0, to be calculated
             reading_type="A"
         ),
         HistoricalUsageLog(
-            timestamp=datetime(2025, 1, 1, 3, 0), # 3 AM (Off-Peak)
+            timestamp=off_peak_time, # Use fixture: 3 AM (Off-Peak)
             mpan_id="12345",
             kwh_consumption=0.5,
             kwh_cost=0.0, # Original cost is 0.0, to be calculated
