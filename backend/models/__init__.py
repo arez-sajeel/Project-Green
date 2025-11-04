@@ -25,3 +25,8 @@ from .tariff import Tariff
 
 # From backend/models/usage.py
 from .usage import HistoricalUsageLog
+
+# --- START OF MODIFICATION (SPRINT 2.4) ---
+# From backend/models/scenario.py
+from .scenario import ShiftValidationRequest
+# --- END OF MODIFICATION (SPRINT 2.4) ---
