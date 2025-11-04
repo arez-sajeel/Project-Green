@@ -88,7 +88,6 @@ class OptimisationEngine:
             return True
         return False
 
-    # --- START OF MODIFICATION (SPRINT 2.c) ---
     def create_timestamped_curve(self, usage_logs: List[HistoricalUsageLog]) -> pd.DataFrame:
         """
         Implementation for [Sprint 2: Create Baseline Curve].
@@ -124,7 +123,6 @@ class OptimisationEngine:
             curve_df.set_index("timestamp", inplace=True)
             
         return curve_df
-    # --- END OF MODIFICATION (SPRINT 2.c) ---
 
     # --- Sprint 3: Calculation Methods ---
     
@@ -138,15 +136,59 @@ class OptimisationEngine:
         print("Stub: Calculating total cost...")
         return 0.0
 
+    # --- START OF MODIFICATION (SPRINT 3.2) ---
     def simulate_load_subtraction(self, usage_curve: pd.DataFrame, device_id: int, time: datetime) -> pd.DataFrame:
         """
-        Stub for [Sprint 3: Simulate Load Subtraction].
-        Removes a device's load from the baseline curve at a specific time.
+        Implementation for [Sprint 3: Simulate Load Subtraction].
+        
+        Removes a device's load from the baseline curve at a specific time
+        and recalculates the cost for that single timestamp.
         """
-        # TODO: Implement numpy/pandas logic to find the 'time' index
-        # and subtract the device's 'average_draw_kW'.
-        print(f"Stub: Subtracting device {device_id} load at {time}...")
-        return usage_curve.copy() # Return a copy to avoid mutation
+        # First, get the device from the property context
+        device = self._get_device_by_id(device_id)
+        
+        # If device isn't found (should be caught by validation,
+        # but good to double check - NFR-S3)
+        if not device:
+            print(f"Warning (S3.2): Device {device_id} not found. No subtraction performed.")
+            return usage_curve.copy() # Return original curve
+
+        # Make a copy to prevent mutating the original DataFrame (NFR-S3)
+        temp_curve = usage_curve.copy()
+
+        # Per API-info.docx, all data is half-hourly (HH).
+        # Energy (kWh) = Power (kW) * Time (h)
+        # We assume the average_draw_kW is for a full hour, so we take 0.5 (30 mins).
+        energy_to_subtract_kwh = device.average_draw_kW * 0.5
+
+        try:
+            # 1. Get current consumption at the specified time
+            # We use .loc[] to access the row by its timestamp index
+            current_consumption = temp_curve.loc[time, 'kwh_consumption']
+            
+            # 2. Calculate new consumption
+            new_consumption = current_consumption - energy_to_subtract_kwh
+            # Ensure consumption doesn't go below zero
+            new_consumption = max(0.0, new_consumption)
+            
+            # 3. Recalculate cost for this *new* consumption
+            new_cost = self.tariff.calculate_cost(
+                kwh_consumption=new_consumption,
+                timestamp=time
+            )
+            
+            # 4. Update the DataFrame at that specific timestamp
+            temp_curve.loc[time, 'kwh_consumption'] = new_consumption
+            temp_curve.loc[time, 'kwh_cost'] = new_cost
+
+        except KeyError:
+            # Handle error if the specified 'time' is not in the DataFrame index
+            # This adheres to P3 (Explicit Error Handling)
+            print(f"Warning (S3.2): Timestamp {time} not found in usage curve. No subtraction performed.")
+            # In a real API, we might raise an HTTPException here
+        
+        return temp_curve
+    # --- END of MODIFICATION (SPRINT 3.2) ---
 
     def simulate_load_addition(self, usage_curve: pd.DataFrame, device_id: int, time: datetime) -> pd.DataFrame:
         """
@@ -191,3 +233,4 @@ class OptimisationEngine:
             if device.device_id == device_id:
                 return device
         return None
+
