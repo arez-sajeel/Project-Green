@@ -266,19 +266,54 @@ class OptimisationEngine:
             )
     # --- END OF MODIFICATION (SPRINT 3.2) ---
 
-    def simulate_load_addition(self, usage_curve: pd.DataFrame, device: Device, time: datetime) -> pd.DataFrame: # <-- MODIFIED (S2.4)
+    # --- START OF MODIFICATION (SPRINT 3.3) ---
+    def simulate_load_addition(self, usage_curve: pd.DataFrame, device: Device, time: datetime) -> pd.DataFrame:
         """
-        Stub for [Sprint 3: Simulate Load Addition].
-        Adds a device's load to the baseline curve at a new time.
+        Implementation for [Sprint 3.3: Simulate Load Addition].
+        Adds a device's load to the usage curve at a new time.
         
-        MODIFIED (S2.4):
-        - Accepts the full validated Device object.
+        This logic mirrors S3.2 (Simulate Load Subtraction).
         """
-        # TODO: Implement numpy/pandas logic to find the 'time' index,
-        # add the device's 'average_draw_kW', and recalculate 'kwh_cost'
-        # based on the tariff's 'rate_schedule'.
-        print(f"Stub: Adding device {device.device_id} load at {time}...")
-        return usage_curve.copy() # Return a copy to avoid mutation
+        # Adhere to NFR-S3 by creating a copy.
+        # This prevents changing the intermediate curve.
+        modified_curve = usage_curve.copy()
+
+        try:
+            # 1. Calculate the energy (kWh) to add.
+            # As per API-info.docx, our data is half-hourly, so we multiply by 0.5.
+            energy_to_add_kwh = device.average_draw_kW * 0.5
+            
+            # 2. Find the row for the specified time and ADD the energy.
+            # We use .at[] for a fast, direct lookup and update.
+            original_consumption = modified_curve.at[time, "kwh_consumption"]
+            new_consumption = original_consumption + energy_to_add_kwh
+            
+            modified_curve.at[time, "kwh_consumption"] = new_consumption
+            
+            # 3. Recalculate the cost for *only* this modified row.
+            new_cost = self.tariff.calculate_cost(
+                kwh_consumption=new_consumption,
+                timestamp=time
+            )
+            modified_curve.at[time, "kwh_cost"] = new_cost
+            
+            return modified_curve
+
+        except KeyError:
+            # This is our NFR-S3 graceful failure.
+            # If the new_timestamp doesn't exist, log it and return the
+            # unmodified, subtracted curve.
+            logging.warning(f"Timestamp {time} not found in usage curve. No addition performed.")
+            return usage_curve
+        except Exception as e:
+            # P3: Catch-all for any other pandas errors
+            logging.error(f"Error in simulate_load_addition: {e}")
+            # Raise an error to stop the calculation
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Internal calculation error: {e}"
+            )
+    # --- END OF MODIFICATION (SPRINT 3.3) ---
 
     # --- Sprint 4: Deployment Methods ---
     
@@ -313,4 +348,3 @@ class OptimisationEngine:
             if device.device_id == device_id:
                 return device
         return None
-
