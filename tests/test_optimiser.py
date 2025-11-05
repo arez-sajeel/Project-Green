@@ -177,7 +177,7 @@ def test_validate_shift_input(engine, mock_device_shiftable, mock_device_non_shi
     assert e.value.status_code == 404
     assert "not found" in e.value.detail
 
-def test_run_scenario_prediction_stub(engine, mock_device_shiftable, peak_time): # Modified
+def test_run_scenario_prediction_stub(engine, mock_device_shiftable, peak_time, off_peak_time): # Modified
     """
     Tests the main orchestration stub [Sprint 4: Orchestrate API Endpoint].
     This confirms the dummy values flow through the stubs correctly
@@ -188,35 +188,47 @@ def test_run_scenario_prediction_stub(engine, mock_device_shiftable, peak_time):
     REFACTORED: This test is updated to match the S2.4 implementation,
     which now takes a single `ShiftValidationRequest` Pydantic model.
     """
-    start_time = peak_time # Use fixture: 6 PM
-    end_time = datetime(2025, 1, 2, 4, 0)   # 4 AM
+    # --- START OF MODIFICATION (SPRINT 3.3) ---
+    # This test now validates the FULL calculation chain from S2.c to S3.3.
+    # The 'stub' in the name is now a misnomer, but we keep it for consistency
+    # with the original test plan.
     
     # Test 1 (Happy Path): Run the main orchestrator
     request = ShiftValidationRequest(
         device_id=mock_device_shiftable.device_id,
-        original_timestamp=start_time,
-        new_timestamp=end_time
+        original_timestamp=peak_time,
+        new_timestamp=off_peak_time # <-- Use the off-peak fixture
     )
     result = engine.run_scenario_prediction(request)
     
-    # --- MODIFIED (S3.2) ---
-    # We now have S3.2 (Subtraction) implemented.
-    # Baseline Cost = 65.0
-    # Scenario Cost = 37.5 (peak) + 5.0 (off-peak) = 42.5
-    # Savings = 65.0 - 42.5 = 22.5
-    # The 'simulate_load_addition' stub still just returns the curve
-    # it was given, so this calculation is now correct.
+    # We now have S3.1, S3.2, AND S3.3 implemented.
+    # Baseline Cost (S3.1) = 65.0 (from 60.0 + 5.0)
+    #
+    # Subtraction (S3.2) modifies 6 PM:
+    #   - Cost = 37.5
+    #   - Curve costs are [37.5, 5.0]
+    #
+    # Addition (S3.3) modifies 3 AM:
+    #   - Cost = 12.5
+    #   - Curve costs are [37.5, 12.5]
+    #
+    # Scenario Cost (S3.4) = 37.5 + 12.5 = 50.0
+    #
+    # Final Savings (S4.a) = 65.0 - 50.0 = 15.0
+    
     assert result["baseline_cost"] == 65.0
-    assert result["scenario_cost"] == 42.5
-    assert result["estimated_savings"] == 22.5
+    assert result["scenario_cost"] == 50.0
+    assert result["estimated_savings"] == 15.0
+    
+    # --- END OF MODIFICATION (SPRINT 3.3) ---
     
     # Test 2 (Error Path): Check that an HTTPException is raised
     # This comes from the `validate_shift_input` step failing.
     with pytest.raises(HTTPException) as e:
         invalid_request = ShiftValidationRequest(
             device_id=999, # Fake device
-            original_timestamp=start_time,
-            new_timestamp=end_time
+            original_timestamp=peak_time,
+            new_timestamp=off_peak_time
         )
         engine.run_scenario_prediction(invalid_request)
     
@@ -358,3 +370,55 @@ def test_simulate_load_subtraction(engine, mock_device_shiftable, peak_time, off
 
 # --- END OF NEW TEST ---
 
+
+# --- START OF NEW TEST (SPRINT 3.3) ---
+def test_simulate_load_addition(engine, mock_device_shiftable, peak_time, off_peak_time):
+    """
+    Tests the implementation for [Sprint 3.3: Simulate Load Addition].
+    
+    This test validates that the method correctly adds a device's
+    load to a single timestamp and recalculates the cost for that row.
+    
+    Links to: Test Plan 3.3: test_simulate_load_addition (New)
+    """
+    # GIVEN:
+    # 1. The baseline curve.
+    baseline_curve = engine.create_timestamped_curve(engine.raw_usage_logs)
+    
+    # 2. The curve *after* subtraction (the input to our function).
+    #    We know from the test above this curve has [6 PM: 1.25 kWh, 37.5 cost]
+    #    and [3 AM: 0.5 kWh, 5.0 cost].
+    subtracted_curve = engine.simulate_load_subtraction(
+        usage_curve=baseline_curve,
+        device=mock_device_shiftable,
+        time=peak_time
+    )
+    
+    # 3. The mock shiftable device (1.5 kW)
+    # 4. The *new* timestamp (3 AM)
+    
+    # WHEN:
+    # We simulate adding the device's load to the OFF-PEAK time
+    added_curve = engine.simulate_load_addition(
+        usage_curve=subtracted_curve, # Use the subtracted curve
+        device=mock_device_shiftable,
+        time=off_peak_time
+    )
+    
+    # THEN:
+    # 1. Calculate the expected new values for the OFF-PEAK time
+    # Energy to add = 1.5 kW * 0.5 h = 0.75 kWh
+    # New Consumption = 0.5 kWh (original) + 0.75 kWh = 1.25 kWh
+    # New Cost = 1.25 kWh * 10.0p/kWh (off-peak rate) = 12.5
+    
+    # 2. Check the OFF-PEAK row (3 AM)
+    off_peak_row = added_curve.loc[off_peak_time]
+    assert off_peak_row['kwh_consumption'] == 1.25
+    assert off_peak_row['kwh_cost'] == 12.5
+    
+    # 3. Check the PEAK row (6 PM) to ensure it was NOT changed
+    #    (it should still have its subtracted value)
+    peak_row = added_curve.loc[peak_time]
+    assert peak_row['kwh_consumption'] == 1.25 # Unchanged from subtracted
+    assert peak_row['kwh_cost'] == 37.5     # Unchanged from subtracted
+# --- END OF NEW TEST (SPRINT 3.3) ---
