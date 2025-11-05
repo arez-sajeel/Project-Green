@@ -6,6 +6,7 @@ import pandas as pd
 from datetime import datetime
 from typing import List, Dict, Optional
 from fastapi import HTTPException # <-- MODIFIED (S2.4): For error handling (NFR-S3)
+import logging # <-- ADDED (S3.1): For logging errors
 
 # Use absolute imports from 'backend' to be discoverable by pytest
 from backend.models.property import Property, Device
@@ -57,6 +58,8 @@ class OptimisationEngine:
         self.baseline_usage_curve = self.create_timestamped_curve(self.raw_usage_logs)
         
         # [Sprint 3: Calculate Baseline Cost]
+        # --- MODIFIED (S3.1) ---
+        # This now calls our new, robust calculation method.
         self.baseline_cost = self.calculate_total_cost(self.baseline_usage_curve)
         
         # [Sprint 3: Simulate Load Subtraction]
@@ -74,6 +77,8 @@ class OptimisationEngine:
         )
         
         # [Sprint 3: Calculate Scenario Cost]
+        # --- MODIFIED (S3.1) ---
+        # We reuse our D.R.Y. function to calculate the new cost.
         self.scenario_cost = self.calculate_total_cost(self.scenario_usage_curve)
         
         # [Task 4a: Calculate Final Savings]
@@ -166,28 +171,100 @@ class OptimisationEngine:
 
     # --- Sprint 3: Calculation Methods ---
     
+    # --- START OF MODIFICATION (SPRINT 3.1) ---
     def calculate_total_cost(self, usage_curve: pd.DataFrame) -> float:
         """
-        Stub for [Sprint 3: Calculate Baseline/Scenario Cost].
-        Calculates the total cost from a given usage curve.
+        Implementation for [Sprint 3.1: Calculate Baseline Cost]
+        and [Sprint 3.4: Calculate Scenario Cost].
+        
+        This function is D.R.Y. (P1) and calculates the single total cost
+        from a given usage curve DataFrame by summing its 'kwh_cost' column.
+        
+        It includes explicit error handling (P3, NFR-S3).
         """
-        # TODO: Implement this in Sprint 3
-        # In a real implementation, this would sum the 'kwh_cost' column.
-        print("Stub: Calculating total cost...")
-        return 0.0
+        try:
+            # Check if the DataFrame is empty
+            if usage_curve.empty:
+                logging.warning("calculate_total_cost received an empty DataFrame.")
+                return 0.0
+                
+            # Check if the required column exists
+            if "kwh_cost" not in usage_curve.columns:
+                logging.error("Missing 'kwh_cost' column in usage_curve.")
+                # Raise an error that our orchestrator can catch
+                raise HTTPException(
+                    status_code=500, 
+                    detail="Internal error: Cost column missing from calculation."
+                )
 
+            # Use the built-in pandas sum() function.
+            # .sum() safely returns 0.0 for an empty Series, but we check above anyway.
+            total_cost = usage_curve["kwh_cost"].sum()
+            
+            # Return as a standard Python float
+            return float(total_cost)
+
+        except Exception as e:
+            # Catch any other unexpected pandas errors
+            logging.error(f"Error calculating total cost: {e}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Internal calculation error: {e}"
+            )
+    # --- END OF MODIFICATION (SPRINT 3.1) ---
+
+    # --- START OF MODIFICATION (SPRINT 3.2) ---
     def simulate_load_subtraction(self, usage_curve: pd.DataFrame, device: Device, time: datetime) -> pd.DataFrame: # <-- MODIFIED (S2.4)
         """
-        Stub for [Sprint 3: Simulate Load Subtraction].
+        Implementation for [Sprint 3.2: Simulate Load Subtraction].
         Removes a device's load from the baseline curve at a specific time.
         
-        MODIFIED (S2.4):
-        - Accepts the full validated Device object.
+        This logic is taken directly from the 'sprint3.docx' documentation.
         """
-        # TODO: Implement numpy/pandas logic to find the 'time' index
-        # and subtract the device's 'average_draw_kW'.
-        print(f"Stub: Subtracting device {device.device_id} load at {time}...")
-        return usage_curve.copy() # Return a copy to avoid mutation
+        # Adhere to NFR-S3 by creating a copy.
+        # This prevents changing the original baseline curve.
+        modified_curve = usage_curve.copy()
+        
+        try:
+            # 1. Calculate the energy (kWh) to subtract.
+            # As per API-info.docx, our data is half-hourly, so we multiply by 0.5.
+            energy_to_subtract_kwh = device.average_draw_kW * 0.5
+            
+            # 2. Find the row for the specified time and subtract the energy.
+            # We use .at[] for a fast, direct lookup and update.
+            original_consumption = modified_curve.at[time, "kwh_consumption"]
+            new_consumption = original_consumption - energy_to_subtract_kwh
+            
+            # Ensure consumption doesn't go below zero
+            if new_consumption < 0:
+                new_consumption = 0.0
+                
+            modified_curve.at[time, "kwh_consumption"] = new_consumption
+            
+            # 3. Recalculate the cost for *only* this modified row.
+            new_cost = self.tariff.calculate_cost(
+                kwh_consumption=new_consumption,
+                timestamp=time
+            )
+            modified_curve.at[time, "kwh_cost"] = new_cost
+            
+            return modified_curve
+
+        except KeyError:
+            # This is our NFR-S3 graceful failure.
+            # If the timestamp doesn't exist, log it and return the
+            # original, unmodified curve.
+            logging.warning(f"Timestamp {time} not found in usage curve. No subtraction performed.")
+            return usage_curve
+        except Exception as e:
+            # P3: Catch-all for any other pandas errors
+            logging.error(f"Error in simulate_load_subtraction: {e}")
+            # Raise an error to stop the calculation
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Internal calculation error: {e}"
+            )
+    # --- END OF MODIFICATION (SPRINT 3.2) ---
 
     def simulate_load_addition(self, usage_curve: pd.DataFrame, device: Device, time: datetime) -> pd.DataFrame: # <-- MODIFIED (S2.4)
         """
