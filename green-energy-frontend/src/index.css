@@ -193,8 +193,9 @@ body {
 }
 
 .auth-footer a {
-  font-weight: 600;
+  font-weight: 700;
   color: #000000;
+  text-decoration: none;
 }
 
 /* ========================================

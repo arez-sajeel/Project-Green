@@ -5,9 +5,11 @@
 # - Added Redis connection handlers for startup/shutdown.
 # - Added data loading and NFR-P2 simulation logic on startup.
 # - Removed persistence "STUB" and now calls mongo_crud.
+# - Added CORS middleware for frontend integration.
 # ---
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from backend.routers import auth  # Use absolute import
 from backend.routers import context 
 import sys
@@ -138,6 +140,15 @@ app = FastAPI(
     description="API for managing energy data and providing optimization reports.",
     version="0.2.2", # Incremented version for Task 2.2
     lifespan=lifespan  # NEW (S2): Use the lifespan context manager
+)
+
+# --- Add CORS Middleware ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Frontend dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

@@ -1,15 +1,17 @@
 // src/pages/Login.jsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
+import { loginUser, saveToken } from "../services/authService";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
@@ -23,12 +25,23 @@ export default function Login() {
       return;
     }
 
-    // UI-only behaviour: we just simulate a request
+    // Connect to backend
     setLoading(true);
-    setTimeout(() => {
-      console.log("Login submitted (UI only)", { email, password });
+    try {
+      const data = await loginUser(email, password);
+      
+      // Save the JWT token
+      saveToken(data.access_token);
+      
+      // Redirect to home page or dashboard
+      console.log("Login successful!", data);
+      navigate("/homeowner"); // or "/manager" based on user role
+      
+    } catch (err) {
+      setError(err.message || "Login failed. Please try again.");
+    } finally {
       setLoading(false);
-    }, 700);
+    }
   }
 
   return (
