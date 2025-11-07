@@ -10,4 +10,5 @@ python-multipart # Required by FastAPI to parse form data (used in our /login ro
 pandas # For reading local CSV/JSON files (e.g., mock tariffs, UKPN data)
 numpy # For efficient numerical calculations in the OptimisationEngine.
 pytest # The framework for running our unit tests.
-redis[hiredis] # The async Python client for our Redis cache (NFR-P2).
+redis[hiredis] # The async Python client for our Redis cache (NFR-P2).asyncstdlib # For async iteration helpers.
+python-dotenv # For loading environment variables from .env file.
