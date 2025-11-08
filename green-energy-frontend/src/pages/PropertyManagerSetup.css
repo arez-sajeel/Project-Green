@@ -1,0 +1,91 @@
+.pm-dash-container {
+  min-height: 100vh;
+  background: #f5f5e9;
+  font-family: "Inter", sans-serif;
+  padding: 24px;
+}
+
+/* HEADER */
+.pm-dash-header {
+  background: #3FA34D;
+  color: white;
+  padding: 32px 24px;
+  border-radius: 0 0 40px 0;
+  margin-bottom: 28px;
+}
+
+.pm-dash-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.pm-dash-header p {
+  margin-top: 6px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* CARD GRID */
+.pm-dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+/* CARD STYLE */
+.pm-dash-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  transition: 0.25s;
+}
+
+.pm-dash-card:hover {
+  transform: translateY(-4px);
+  border-color: #3FA34D;
+}
+
+.pm-dash-card h3 {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.pm-dash-card p {
+  margin: 0 0 14px;
+  color: #555;
+}
+
+/* BUTTONS */
+.pm-dash-card button {
+  background: #D84AE2;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  color: white;
+  width: 100%;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.pm-dash-card button:hover {
+  background: #b738bf;
+}
+
+/* LOGOUT BUTTON */
+.pm-dash-logout {
+  margin-top: 40px;
+  background: #8b4daa;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  width: 100%;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.pm-dash-logout:hover {
+  background: #6d3991;
+}

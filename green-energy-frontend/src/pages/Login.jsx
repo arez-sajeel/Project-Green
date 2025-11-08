@@ -1,7 +1,6 @@
 // src/pages/Login.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import AuthLayout from "../components/AuthLayout";
 import { loginUser, saveToken } from "../services/authService";
 
 export default function Login() {
@@ -15,73 +14,76 @@ export default function Login() {
     e.preventDefault();
     setError("");
 
-    // simple UI validation only
     if (!email || !password) {
       setError("Email and password are required.");
       return;
     }
+
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       setError("Enter a valid email.");
       return;
     }
 
-    // Connect to backend
     setLoading(true);
     try {
       const data = await loginUser(email, password);
-      
-      // Save the JWT token
+
+      // Save JWT token
       saveToken(data.access_token);
+
+      // Save role returned from backend
+      localStorage.setItem("userRole", data.role);
+
+      if (data.role === "homeowner") {
+        navigate("/homeowner-setup");
+      } else if (data.role === "property_manager") {
+        navigate("/property-manager-setup");
+      }
       
-      // Redirect to home page or dashboard
-      console.log("Login successful!", data);
-      navigate("/homeowner"); // or "/manager" based on user role
-      
+
     } catch (err) {
-      setError(err.message || "Login failed. Please try again.");
+      setError(err.message || "Login failed. Try again.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <AuthLayout title="Welcome back!">
-      <form onSubmit={handleSubmit}>
-        <label className="auth-field-label">Email:</label>
-        <input
-          className="auth-input"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-        />
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1 className="auth-title">Welcome back!</h1>
 
-        <label className="auth-field-label">Password:</label>
-        <input
-          className="auth-input"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-        />
+        <form onSubmit={handleSubmit} className="auth-form">
+          <label>Email</label>
+          <input
+            className="auth-input"
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-        <div className="auth-forgot">
-          <button type="button" className="auth-link">
-            Forgot password?
+          <label>Password</label>
+          <input
+            className="auth-input"
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          {error && <p className="auth-error">{error}</p>}
+
+          <button type="submit" className="auth-button" disabled={loading}>
+            {loading ? "Logging in..." : "Continue"}
           </button>
-        </div>
+        </form>
 
-        {error && <p className="auth-error">{error}</p>}
-
-        <button className="auth-button-primary" disabled={loading} type="submit">
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
-
-      <div className="auth-footer">
-        <span>Dont have an account?</span>
-        <Link to="/register">Sign up</Link>
+        <p className="auth-footer">
+          Don’t have an account? <Link to="/register">Sign up</Link>
+        </p>
       </div>
-    </AuthLayout>
+    </div>
   );
 }
+

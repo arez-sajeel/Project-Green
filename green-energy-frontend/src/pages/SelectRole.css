@@ -1,0 +1,80 @@
+.role-container {
+  background: #f5f5e9;
+  min-height: 100vh;
+  padding: 20px;
+  text-align: center;
+  font-family: "Inter", sans-serif;
+}
+
+.role-header {
+  background: #3FA34D;
+  height: 160px;
+  width: 100%;
+  border-bottom-left-radius: 60px;
+}
+
+.role-title {
+  margin-top: -40px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #8b4daa;
+  padding: 0 20px;
+  line-height: 1.4;
+}
+
+.role-subtitle {
+  margin-top: 16px;
+  font-size: 15px;
+  color: #444;
+}
+
+.role-card-group {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.role-card {
+  background: #ffffff;
+  border-radius: 14px;
+  width: 130px;
+  padding: 18px 12px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  transition: 0.25s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.role-card:hover {
+  border-color: #3FA34D;
+  transform: translateY(-4px);
+}
+
+.role-icon {
+  width: 48px;
+  margin-bottom: 10px;
+}
+
+.role-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.role-login-text {
+  margin-top: 40px;
+  font-size: 14px;
+}
+
+.role-login-link {
+  color: #8b4daa;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.role-login-link:hover {
+  text-decoration: underline;
+}

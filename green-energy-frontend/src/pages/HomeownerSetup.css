@@ -1,0 +1,92 @@
+.hd-container {
+  min-height: 100vh;
+  background: #f5f5e9;
+  font-family: "Inter", sans-serif;
+  padding: 24px;
+}
+
+/* Header Section */
+.hd-header {
+  background: #3FA34D;
+  color: white;
+  padding: 32px 24px;
+  border-radius: 0 0 40px 0;
+  margin-bottom: 28px;
+}
+
+.hd-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.hd-header p {
+  margin-top: 6px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Cards Layout */
+.hd-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+/* Card Style */
+.hd-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  transition: 0.25s;
+}
+
+.hd-card:hover {
+  transform: translateY(-4px);
+  border-color: #3FA34D;
+}
+
+.hd-card h3 {
+  margin: 0;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.hd-card p {
+  margin: 0 0 14px;
+  color: #555;
+}
+
+/* Card Buttons */
+.hd-card button {
+  background: #D84AE2;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  color: white;
+  width: 100%;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.hd-card button:hover {
+  background: #b738bf;
+}
+
+/* Logout */
+.hd-logout {
+  margin-top: 40px;
+  background: #8b4daa;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  width: 100%;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.hd-logout:hover {
+  background: #6d3991;
+}

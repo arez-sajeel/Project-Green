@@ -1,0 +1,93 @@
+.home-dashboard {
+    min-height: 100vh;
+    background: #f5f5e9;
+    padding: 24px;
+    font-family: "Inter", sans-serif;
+  }
+  
+  /* Header */
+  .home-header {
+    background: #3FA34D;
+    color: white;
+    padding: 30px 24px;
+    border-radius: 14px;
+    margin-bottom: 32px;
+  }
+  
+  .home-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+  }
+  
+  .home-subtitle {
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  
+  /* Grid of cards */
+  .home-card-grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+  
+  /* Card design */
+  .home-card {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    text-align: left;
+    transition: 0.25s;
+  }
+  
+  .home-card:hover {
+    border-color: #3FA34D;
+    transform: translateY(-4px);
+  }
+  
+  .home-card h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .home-card p {
+    margin: 0 0 12px;
+    color: #555;
+  }
+  
+  /* Buttons inside cards */
+  .home-card button {
+    background: #3FA34D;
+    border: none;
+    padding: 10px 14px;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  
+  .home-card button:hover {
+    background: #2e7a39;
+  }
+  
+  /* Logout button */
+  .home-logout-btn {
+    margin-top: 40px;
+    background: #8b4daa;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    width: 100%;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.2s;
+  }
+  
+  .home-logout-btn:hover {
+    background: #6f3da1;
+  }
+  
