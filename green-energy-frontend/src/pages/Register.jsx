@@ -1,7 +1,8 @@
 // src/pages/Register.jsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
+import { registerUser, saveToken } from "../services/authService";
 
 export default function Register() {
   const [fullName, setFullName] = useState("");
@@ -9,8 +10,9 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
@@ -23,16 +25,24 @@ export default function Register() {
       return;
     }
 
-    // UI-only: pretend to send request
+    // Connect to backend
     setLoading(true);
-    setTimeout(() => {
-      console.log("Register submitted (UI only)", {
-        fullName,
-        email,
-        password,
-      });
+    try {
+      // Default to Homeowner role for now
+      const data = await registerUser(email, password, "Homeowner");
+      
+      // Save the JWT token
+      saveToken(data.access_token);
+      
+      // Redirect to homeowner dashboard
+      console.log("Registration successful!", data);
+      navigate("/homeowner");
+      
+    } catch (err) {
+      setError(err.message || "Registration failed. Please try again.");
+    } finally {
       setLoading(false);
-    }, 700);
+    }
   }
 
   return (
@@ -68,8 +78,7 @@ export default function Register() {
         {error && <p className="auth-error">{error}</p>}
 
         <button className="auth-button-primary" disabled={loading} type="submit">
-          {loading ? "Creating..." : "Login"}
-          {/* If you want the button text to be "Sign up" instead, change here */}
+          {loading ? "Creating..." : "Sign up"}
         </button>
       </form>
 
