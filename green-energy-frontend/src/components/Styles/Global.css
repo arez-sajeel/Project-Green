@@ -1,0 +1,22 @@
+:root {
+    --color-bg: #f5f7fb;
+    --color-primary: #16a34a;
+    --color-accent: #22c55e;
+    --color-text: #0f172a;
+    --radius-lg: 16px;
+    --shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.08);
+    --font-main: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    font-family: var(--font-main);
+    background: var(--color-bg);
+    color: var(--color-text);
+  }

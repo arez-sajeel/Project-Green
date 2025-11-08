@@ -2,6 +2,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
+import Manager from "./pages/Manager.jsx";
+import HomeOwner from "./pages/HomeOwner.jsx";
 
 function App() {
   return (
@@ -9,6 +11,8 @@ function App() {
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/manager" element={<Manager />} />
+      <Route path="/homeOwner" element={<HomeOwner />} />
     </Routes>
   );
 }
