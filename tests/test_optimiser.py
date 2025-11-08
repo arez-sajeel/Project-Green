@@ -422,3 +422,74 @@ def test_simulate_load_addition(engine, mock_device_shiftable, peak_time, off_pe
     assert peak_row['kwh_consumption'] == 1.25 # Unchanged from subtracted
     assert peak_row['kwh_cost'] == 37.5     # Unchanged from subtracted
 # --- END OF NEW TEST (SPRINT 3.3) ---
+
+
+# --- START OF NEW TESTS (Sprint 4.1 Calculate FInal Savings) ---
+
+def test_calculate_final_savings_happy_path(engine):
+    """
+    Test the happy path for 4.1
+    Validates that method correctly computes savings, updates internal state,
+    and returns the expected value
+    """
+    # GIVEN:
+    cost_before = 200.50
+    cost_after = 150.25
+
+    # WHEN:
+    savings = engine.calculate_final_savings(cost_before, cost_after)
+
+    # THEN:
+    assert savings == 50.25
+    assert engine.estimated_savings == 50.25
+
+def test_calculate_final_savings_negative_result(engine):
+    """
+    Validates that method correctly computes savings, updates internal state,
+    and returns the expected value when costs increase
+    """
+    # GIVEN:
+    cost_before = 100.0
+    cost_after = 130.0
+
+    # WHEN:
+    savings = engine.calculate_final_savings(cost_before, cost_after)
+
+    # THEN:
+    assert savings == -30.0
+    assert engine.estimated_savings == -30.0
+
+def test_calculate_final_savings_none_input(engine):
+    """
+    Validates that method correctly computes savings, updates internal state,
+    and returns the expected value when there is no input
+    Should raise an HTTPException
+    """
+    # GIVEN:
+    cost_before = None
+    cost_after = 120.0
+
+    # WHEN/THEN:
+    with pytest.raises(HTTPException) as e:
+        engine.calculate_final_savings(cost_before, cost_after)
+
+    assert e.value.status_code == 400
+    assert "cannot be None" in e.value.detail
+
+def test_calculate_final_savings_invalid_type(engine):
+    """
+    Validates that method correctly handles non-numeric input types.
+    Should raise an HTTPException with status 400.
+    """
+    # GIVEN:
+    cost_before = "invalid"
+    cost_after = 120.0
+
+    # WHEN/THEN:
+    with pytest.raises(HTTPException) as e:
+        engine.calculate_final_savings(cost_before, cost_after)
+
+    assert e.value.status_code == 400
+    assert "must be numeric" in e.value.detail
+
+# --- END OF NEW TESTS (Sprint 4.1)
