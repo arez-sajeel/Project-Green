@@ -25,21 +25,49 @@ export default function Register() {
       return;
     }
 
-    // Connect to backend
     setLoading(true);
+
+    // Register user without a role - they must select it on the next page
     try {
-      // Default to Homeowner role for now
-      const data = await registerUser(email, password, "Homeowner");
-      
-      // Save the JWT token
+      const response = await fetch('http://localhost:8000/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          // Don't include role - user must select on role page
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        // If email exists, show error and don't proceed
+        if (response.status === 409) {
+          setError("A user with this email already exists.");
+          setLoading(false);
+          return;
+        }
+        setError(errorData.detail || "Registration failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // Registration successful - store token and redirect to role selection
+      const data = await response.json();
       saveToken(data.access_token);
       
-      // Redirect to homeowner dashboard
-      console.log("Registration successful!", data);
-      navigate("/homeowner");
+      // Clear form fields
+      setEmail("");
+      setPassword("");
+      setFullName("");
+      
+      // Redirect to role selection - user MUST select a role to continue
+      navigate("/role");
       
     } catch (err) {
-      setError(err.message || "Registration failed. Please try again.");
+      setError("Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }

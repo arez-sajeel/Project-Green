@@ -1,4 +1,4 @@
-.hd-container {
+.pm-dash-container {
   min-height: 100vh;
   max-width: 390px;
   margin: 0 auto;
@@ -7,8 +7,8 @@
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
 }
 
-/* Header */
-.hd-header {
+/* HEADER */
+.pm-dash-header {
   background: #30a44f;
   color: white;
   padding: 32px 32px;
@@ -19,28 +19,28 @@
   justify-content: flex-end;
 }
 
-.hd-header h1 {
+.pm-dash-header h1 {
   margin: 0 0 8px;
   font-size: 2rem;
   font-weight: 700;
 }
 
-.hd-header p {
+.pm-dash-header p {
   margin: 0;
   font-size: 0.95rem;
   opacity: 0.95;
 }
-  
-/* Grid of cards */
-.hd-card-grid {
+
+/* CARD GRID */
+.pm-dash-grid {
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 24px 32px;
 }
 
-/* Card design */
-.hd-card {
+/* CARD STYLE */
+.pm-dash-card {
   background: white;
   border-radius: 12px;
   padding: 20px;
@@ -50,28 +50,28 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-.hd-card:hover {
+.pm-dash-card:hover {
   border-color: #30a44f;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-.hd-card h3 {
+.pm-dash-card h3 {
   margin: 0 0 8px;
   font-size: 1.1rem;
   font-weight: 600;
   color: #111827;
 }
 
-.hd-card p {
+.pm-dash-card p {
   margin: 0 0 16px;
   color: #6b7280;
   font-size: 0.9rem;
   line-height: 1.5;
 }
 
-/* Buttons inside cards */
-.hd-card button {
+/* BUTTONS */
+.pm-dash-card button {
   background: #d355ba;
   border: none;
   padding: 10px 16px;
@@ -83,12 +83,12 @@
   font-size: 0.95rem;
 }
 
-.hd-card button:hover {
+.pm-dash-card button:hover {
   background: #c649ae;
 }
 
-/* Logout button */
-.hd-logout {
+/* LOGOUT BUTTON */
+.pm-dash-logout {
   margin: 24px 32px 32px;
   background: #30a44f;
   color: white;
@@ -102,25 +102,24 @@
   transition: 0.2s;
 }
 
-.hd-logout:hover {
+.pm-dash-logout:hover {
   background: #268237;
 }
 
-/* Responsive */
+/* RESPONSIVE */
 @media (max-width: 420px) {
-  .hd-container {
+  .pm-dash-container {
     max-width: 100%;
     box-shadow: none;
   }
 
-  .hd-header,
-  .hd-card-grid {
+  .pm-dash-header,
+  .pm-dash-grid {
     padding-inline: 24px;
   }
 
-  .hd-logout {
+  .pm-dash-logout {
     margin-inline: 24px;
     width: calc(100% - 48px);
   }
 }
-  
