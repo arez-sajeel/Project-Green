@@ -1,3 +1,7 @@
+# Node modules (frontend dependencies)
+node_modules/
+package-lock.json
+
 # Python virtual environments
 venv/
 .venv/
@@ -67,3 +71,11 @@ dmypy.json
 
 # Redis dump
 dump.rdb
+
+# JDK and other large binary installations
+**/jdk*/
+**/oracleJdk*/
+*.jmod
+*.dll
+*.exe
+*.node
