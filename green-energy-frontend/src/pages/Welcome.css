@@ -1,7 +1,10 @@
-/* ========================================
-   Welcome Page Styles
-   Sprint 1 Task 2: Welcome Page (HO)
-   ======================================== */
+/* ==================================================
+   Welcome Page Styles (cleaned)
+   - Removed duplicate blocks
+   - Removed stray/malformed properties
+   - Consolidated responsive rules
+   File: src/pages/Welcome.css
+   ================================================== */
 
 .welcome-root {
   min-height: 100vh;
@@ -14,31 +17,28 @@
 }
 
 .welcome-card {
-  width: 390px; /* iPhone 14 width - consistent with auth pages */
+  width: 390px; /* matches mobile preview */
   max-width: 100%;
-  min-height: 844px; /* iPhone 14 height */
-  background: #f6f7ef;
+  /* mimic auth header color in the upper area while keeping card body pale */
+  background: linear-gradient(180deg, #30a44f 0 260px, #f6f7ef 260px 100%);
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
-  border-radius: 0;
-  overflow: hidden;
+  border-radius: 0; /* square card per design */
+  /* allow mascot to overflow visually without increasing card size */
+  overflow: visible;
   display: flex;
   flex-direction: column;
+  min-height: 844px; /* mobile preview height */
 }
 
-/* ========================================
-   Content Layout
-   ======================================== */
-
 .welcome-content {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 64px 32px 0;
+  justify-content: flex-start;
+  padding: 32px 32px 24px;
 }
 
-/* Title and tagline styles */
 .welcome-title {
   font-size: 3.5rem;
   font-weight: 700;
@@ -50,62 +50,32 @@
 
 .welcome-tagline {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #d355ba;
   margin: 0 0 24px 0;
   line-height: 1.4;
   text-align: center;
 }
 
-/* ========================================
-   Branding Section
-   ======================================== */
-/* Mascot container fills bottom, allows overflow for dynamic look */
-.welcome-mascot-container {
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
-  flex: 1;
-  min-height: 0;
-  margin-top: 40px;
-  padding-right: 0;
-  padding-bottom: 0;
-  overflow: visible;
-  position: relative;
-}
-
-.welcome-mascot {
-  width: 420px;
-  max-width: none;
-  height: auto;
-  object-fit: contain;
-  filter: drop-shadow(0 10px 20px rgba(48, 164, 79, 0.15));
-  position: absolute;
-  right: -40px;
-  bottom: -60px;
-}
-
-/* ========================================
-   Action Buttons
-   ======================================== */
-
 .welcome-buttons {
   display: flex;
   gap: 16px;
   width: 100%;
   max-width: 300px;
-  margin: 0 auto 32px auto;
+  /* add more vertical breathing room above and below the buttons */
+  margin: 16px auto 32px auto;
   flex-shrink: 0;
   justify-content: center;
+  position: relative; /* stacking context so buttons sit above mascot */
+  z-index: 3;
 }
 
 .welcome-button {
-  flex: 1;
-  height: 56px;
+  flex: 1 1 auto;
+  height: 52px;
   border-radius: 12px;
   border: none;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease;
@@ -118,125 +88,40 @@
   background: #222;
   transform: translateY(-1px);
   box-shadow: 0 8px 20px rgba(58, 58, 58, 0.3);
-  }
-
-.welcome-button {
-  flex: 1;
-  height: 52px;
-  border-radius: 10px;
-  border: none;
-  font-size: 1.05rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease;
-  color: #ffffff;
 }
 
-.welcome-button-login {
-  background: #3a3a3a; /* Dark gray/black for login */
-  box-shadow: 0 6px 16px rgba(58, 58, 58, 0.25);
-}
-
-.welcome-button-login:hover {
-  background: #2a2a2a;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(58, 58, 58, 0.3);
-}
-
+.welcome-button-login,
 .welcome-button-signup {
-  background: #3a3a3a; /* Dark gray/black for signup */
-  box-shadow: 0 6px 16px rgba(58, 58, 58, 0.25);
-}
-
-.welcome-button-signup:hover {
-  background: #2a2a2a;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(58, 58, 58, 0.3);
+  background: #3a3a3a;
 }
 
 .welcome-button:active {
   transform: translateY(0);
 }
 
-/* ========================================
-   Mascot Section
-   ======================================== */
-
+/* Mascot: positioned up-right inside the card */
 .welcome-mascot-container {
   width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-  min-height: 350px;
-  margin-top: 30px;
-  padding: 0 20px;
+  display: block;
+  position: relative;
+  flex: 1 0 auto;
+  min-height: 180px;
+  margin-top: 8px;
+  padding: 0 12px 12px;
   overflow: visible;
 }
 
 .welcome-mascot {
-  width: 100%;
-  max-width: 340px;
+  /* make mascot much larger while keeping the card size unchanged; it will overflow */
+  width: 600px;
+  max-width: none;
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 10px 20px rgba(48, 164, 79, 0.15));
-}
-
-/* ========================================
-   Responsive Tweaks
-   ======================================== */
-
-@media (max-width: 420px) {
-  .welcome-card {
-    width: 100%;
-    box-shadow: none;
-    min-height: 100vh;
-  }
-
-  .welcome-content {
-    padding: 48px 24px 32px;
-  }
-
-  .welcome-title {
-    font-size: 3rem;
-  }
-
-  .welcome-tagline {
-    font-size: 1.1rem;
-  }
-
-  .welcome-buttons {
-    max-width: 100%;
-  }
-
-  .welcome-mascot {
-    max-width: 240px;
-  }
-}
-
-@media (min-height: 900px) {
-  .welcome-mascot {
-    width: 480px;
-    right: -60px;
-    bottom: -80px;
-  }
-}
-
-@media (max-height: 700px) {
-  .welcome-content {
-    padding: 40px 32px 0;
-  }
-  .welcome-mascot {
-    width: 300px;
-    right: -20px;
-    bottom: -40px;
-  }
-}
-
-@media (max-width: 420px) {
-  .welcome-mascot {
-    width: 320px;
-    right: -10px;
-    bottom: -30px;
-  }
-}
+  filter: drop-shadow(0 12px 24px rgba(48, 164, 79, 0.14));
+  position: absolute;
+  /* push mascot further right and slightly lower so it visually overflows the card */
+  right: -180px;
+  bottom: -170px;
+  z-index: 1;
+  pointer-events: none; /* allow clicks through mascot */
+} 

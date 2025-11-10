@@ -1,27 +1,46 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import './Welcome.css';
 
 const WelcomePage = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="bg-green-50 flex items-center justify-center min-h-screen">
-      <main className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md w-full">
-        <h1 className="text-4xl font-bold text-green-600 mb-2">Renewi</h1>
-        <p className="text-pink-500 text-lg mb-6">
-          An apple a day keeps the power bills away.
-        </p>
-        <img
-          src= "renewi logo.png"
-          alt="Renewi mascot waving"
-          className="w-48 mx-auto mb-6"
-        />
-        <div className="flex justify-center gap-4">
-          <button className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition">
-            Login
-          </button>
-          <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition">
-            Sign Up
-          </button>
+    <div className="welcome-root">
+      <div className="welcome-card auth-card">
+        <div className="welcome-content auth-body">
+          <header>
+            <h1 className="welcome-title">Renewi</h1>
+            <p className="welcome-tagline">An apple a day keeps the power bills away.</p>
+          </header>
+
+          <div className="welcome-buttons">
+            <button
+              type="button"
+              className="welcome-button welcome-button-login"
+              onClick={() => navigate('/login')}
+            >
+              Login
+            </button>
+
+            <button
+              type="button"
+              className="welcome-button welcome-button-signup"
+              onClick={() => navigate('/register')}
+            >
+              Sign Up
+            </button>
+          </div>
+
+          <div className="welcome-mascot-container">
+            <img
+              src="/renewi-logo.png"
+              alt="Renewi mascot waving"
+              className="welcome-mascot"
+            />
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };
