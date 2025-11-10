@@ -29,10 +29,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow-x: hidden;
 }
 
 #root {
   width: 100%;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -104,7 +106,7 @@ body {
   background: #ffffff;
   color: #111827;
   font-size: 0.95rem;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .auth-input::placeholder {
@@ -120,7 +122,7 @@ body {
 .auth-forgot {
   text-align: right;
   font-size: 0.85rem;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .auth-link {
@@ -151,7 +153,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 300px;
+  width: 100%;
+  max-width: 300px;
   height: 82px;
   margin: 0 auto;
   border-radius: 12px;
@@ -191,15 +194,14 @@ body {
 .auth-footer {
   padding: 24px 32px 28px;
   font-size: 0.9rem;
-  display: flex;
-  justify-content: center;
-  gap: 4px;
+  text-align: center;
 }
 
 .auth-footer a {
   font-weight: 700;
   color: #000000;
   text-decoration: none;
+  margin-left: 4px;
 }
 
 /* ========================================

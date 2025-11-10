@@ -62,3 +62,32 @@ export function clearToken() {
 export function isAuthenticated() {
   return !!getToken();
 }
+
+/**
+ * Register a new user account
+ * @param {string} email - User's email
+ * @param {string} password - User's password
+ * @param {string} role - User's role (Homeowner or PropertyManager)
+ * @returns {Promise<{access_token: string, token_type: string}>}
+ */
+export async function registerUser(email, password, role = 'Homeowner') {
+  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email,
+      password,
+      role,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Registration failed');
+  }
+
+  const data = await response.json();
+  return data; // Returns { access_token, token_type }
+}

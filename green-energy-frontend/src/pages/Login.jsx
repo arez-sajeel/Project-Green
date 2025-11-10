@@ -5,11 +5,11 @@ import AuthLayout from "../components/AuthLayout";
 import { loginUser, saveToken } from "../services/authService";
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -29,18 +29,59 @@ export default function Login() {
     setLoading(true);
     try {
       const data = await loginUser(email, password);
-      
+
       // Save the JWT token
       saveToken(data.access_token);
+
+      // Check if user has completed role selection
+      // The backend should return user info including role
+      // For now, we'll check after login by fetching user profile
       
-      // Redirect to home page or dashboard
-      console.log("Login successful!", data);
-      navigate("/homeowner"); // or "/manager" based on user role
-      
+      // Clear form
+      setEmail("");
+      setPassword("");
+      setError("");
+
+      // Check user's role from backend
+      await checkUserRole();
+
     } catch (err) {
       setError(err.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function checkUserRole() {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('http://localhost:8000/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        
+        if (!userData.role || userData.role === null) {
+          // User has no role - redirect to role selection
+          navigate("/role");
+        } else {
+          // User has a role - store it and redirect to appropriate dashboard
+          localStorage.setItem("userRole", userData.role);
+          
+          if (userData.role === "Homeowner") {
+            navigate("/homeowner-dashboard");
+          } else if (userData.role === "PropertyManager") {
+            navigate("/manager-dashboard");
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch user role:", err);
+      // On error, redirect to role selection to be safe
+      navigate("/role");
     }
   }
 
@@ -79,9 +120,10 @@ export default function Login() {
       </form>
 
       <div className="auth-footer">
-        <span>Dont have an account?</span>
+        <span>Dont have an account? </span>
         <Link to="/register">Sign up</Link>
       </div>
     </AuthLayout>
   );
 }
+

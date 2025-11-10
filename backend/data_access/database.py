@@ -126,7 +126,7 @@ FullUserType = Union[Homeowner, PropertyManager]
 
 async def get_user_by_email(
     db: AsyncIOMotorDatabase, email: str
-) -> Optional[FullUserType]:
+) -> Optional[Union[FullUserType, UserInDB]]:
     """
     Finds a user by their email address.
     
@@ -134,6 +134,8 @@ async def get_user_by_email(
     This function now returns the full Homeowner or PropertyManager
     model, which includes critical fields like `property_id` or
     `portfolio_id` required for NFR-S2 access control.
+    
+    Can also return UserInDB for users who haven't completed role selection.
     """
     try:
         user_data = await db["users"].find_one({"email": email})
@@ -142,10 +144,15 @@ async def get_user_by_email(
             # Pydantic will automatically parse the correct model
             # based on the 'role' field and its corresponding properties
             # (e.g., property_id for Homeowner).
-            if user_data.get("role") == "Homeowner":
+            role = user_data.get("role")
+            
+            if role == "Homeowner":
                 return Homeowner(**user_data)
-            elif user_data.get("role") == "PropertyManager":
+            elif role == "PropertyManager":
                 return PropertyManager(**user_data)
+            elif role is None or role == "":
+                # User hasn't completed role selection yet
+                return UserInDB(**user_data)
         
         return None
     except Exception as e:

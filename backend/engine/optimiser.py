@@ -322,10 +322,49 @@ class OptimisationEngine:
         Implementation for [Task 4a: Calculate Final Savings].
         Calculates the simple difference between baseline and scenario costs.
         """
-        savings = cost_before - cost_after
-        self.estimated_savings = savings
-        return savings
+        #Args:
+        #cost_before (float): The baseline cost before the scenario change.
+        #cost_after (float): The cost after applying the scenario.
 
+        #Returns:
+        #float: The calculated savings (can be negative if the new scenario costs more).
+    
+        try:
+            if cost_before is None or cost_after is None:
+                logging.error("calculate_final_savings received NoneType input.")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Cost values cannot be None"
+                )
+            
+            if not isinstance(cost_before, (int, float)) or not isinstance(cost_after, (int, float)):
+                logging.error("Non numeric input provided.")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Cost values must be numeric"
+                )
+                
+
+            savings = round(cost_before - cost_after, 2)
+
+            self.estimated_savings = savings
+
+            logging.info(f"Calculated final savings: {savings} (before={cost_before}, after={cost_after})")
+
+            return savings
+        
+        except HTTPException:
+
+            raise
+        except Exception as e:
+            logging.error(f"Unexpected error in calculate_final_savings: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Internal calculation error: {e}"
+            )
+        
+            
+        
     def structure_json_output(self) -> Dict:
         """
         Stub for [Task 4b: Structure JSON Output].
