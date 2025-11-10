@@ -1,0 +1,242 @@
+/* ========================================
+   Welcome Page Styles
+   Sprint 1 Task 2: Welcome Page (HO)
+   ======================================== */
+
+.welcome-root {
+  min-height: 100vh;
+  width: 100%;
+  background: #f0f2e9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.welcome-card {
+  width: 390px; /* iPhone 14 width - consistent with auth pages */
+  max-width: 100%;
+  min-height: 844px; /* iPhone 14 height */
+  background: #f6f7ef;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+  border-radius: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========================================
+   Content Layout
+   ======================================== */
+
+.welcome-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 64px 32px 0;
+}
+
+/* Title and tagline styles */
+.welcome-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #30a44f;
+  margin: 0 0 12px 0;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.welcome-tagline {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #d355ba;
+  margin: 0 0 24px 0;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* ========================================
+   Branding Section
+   ======================================== */
+/* Mascot container fills bottom, allows overflow for dynamic look */
+.welcome-mascot-container {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  flex: 1;
+  min-height: 0;
+  margin-top: 40px;
+  padding-right: 0;
+  padding-bottom: 0;
+  overflow: visible;
+  position: relative;
+}
+
+.welcome-mascot {
+  width: 420px;
+  max-width: none;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 20px rgba(48, 164, 79, 0.15));
+  position: absolute;
+  right: -40px;
+  bottom: -60px;
+}
+
+/* ========================================
+   Action Buttons
+   ======================================== */
+
+.welcome-buttons {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto 32px auto;
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.welcome-button {
+  flex: 1;
+  height: 56px;
+  border-radius: 12px;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease;
+  color: #ffffff;
+  background: #2d2d2d;
+  box-shadow: 0 6px 16px rgba(58, 58, 58, 0.25);
+}
+
+.welcome-button:hover {
+  background: #222;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(58, 58, 58, 0.3);
+  }
+
+.welcome-button {
+  flex: 1;
+  height: 52px;
+  border-radius: 10px;
+  border: none;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease;
+  color: #ffffff;
+}
+
+.welcome-button-login {
+  background: #3a3a3a; /* Dark gray/black for login */
+  box-shadow: 0 6px 16px rgba(58, 58, 58, 0.25);
+}
+
+.welcome-button-login:hover {
+  background: #2a2a2a;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(58, 58, 58, 0.3);
+}
+
+.welcome-button-signup {
+  background: #3a3a3a; /* Dark gray/black for signup */
+  box-shadow: 0 6px 16px rgba(58, 58, 58, 0.25);
+}
+
+.welcome-button-signup:hover {
+  background: #2a2a2a;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(58, 58, 58, 0.3);
+}
+
+.welcome-button:active {
+  transform: translateY(0);
+}
+
+/* ========================================
+   Mascot Section
+   ======================================== */
+
+.welcome-mascot-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  min-height: 350px;
+  margin-top: 30px;
+  padding: 0 20px;
+  overflow: visible;
+}
+
+.welcome-mascot {
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 20px rgba(48, 164, 79, 0.15));
+}
+
+/* ========================================
+   Responsive Tweaks
+   ======================================== */
+
+@media (max-width: 420px) {
+  .welcome-card {
+    width: 100%;
+    box-shadow: none;
+    min-height: 100vh;
+  }
+
+  .welcome-content {
+    padding: 48px 24px 32px;
+  }
+
+  .welcome-title {
+    font-size: 3rem;
+  }
+
+  .welcome-tagline {
+    font-size: 1.1rem;
+  }
+
+  .welcome-buttons {
+    max-width: 100%;
+  }
+
+  .welcome-mascot {
+    max-width: 240px;
+  }
+}
+
+@media (min-height: 900px) {
+  .welcome-mascot {
+    width: 480px;
+    right: -60px;
+    bottom: -80px;
+  }
+}
+
+@media (max-height: 700px) {
+  .welcome-content {
+    padding: 40px 32px 0;
+  }
+  .welcome-mascot {
+    width: 300px;
+    right: -20px;
+    bottom: -40px;
+  }
+}
+
+@media (max-width: 420px) {
+  .welcome-mascot {
+    width: 320px;
+    right: -10px;
+    bottom: -30px;
+  }
+}

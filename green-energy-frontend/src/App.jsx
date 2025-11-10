@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import Welcome from "./pages/Welcome.jsx"; // New Welcome Page import
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import SelectRole from "./pages/SelectRole.jsx";
@@ -10,19 +11,19 @@ import RoleProtectedRoute from "./components/RoleProtectedRoute.jsx";
 
 /**
  * App Component - Main Application Router
- * Sprint 1.5: Role-Based Access Setup
- * 
- * Implements role-based routing logic:
- * - Role selection page
- * - Login and Register functionality
- * - Stores selected role in localStorage
+ * Sprint 1: Core Architecture & Access (Foundation)
+ * * Implements complete Sprint 1 requirements:
+ * - Task 2: Welcome Page (Landing screen with Renewi branding)
+ * - Task 3: Login Page 
+ * - Task 4: Create Account Page
+ * - Task 5: Role-Based Access Setup
  * - Protected routes based on user role
  */
 function App() {
   return (
     <Routes>
-      {/* Default route - redirect to login */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* Root Path: Now points to the Welcome page */}
+      <Route path="/" element={<Welcome />} />
       
       {/* Authentication routes */}
       <Route path="/login" element={<Login />} />
