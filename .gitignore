@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Node modules (frontend dependencies)
 node_modules/
 package-lock.json
@@ -79,3 +80,10 @@ dump.rdb
 *.dll
 *.exe
 *.node
+=======
+node_modules/
+dist/
+build/
+.env
+.DS_Store
+>>>>>>> 1dcbfdb (feat: initial clean setup for Property Manager dashboard)
