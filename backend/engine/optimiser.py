@@ -331,7 +331,7 @@ class OptimisationEngine:
     
         try:
             if cost_before is None or cost_after is None:
-                logging.error("calculate_final_savings recieved NoneType input.")
+                logging.error("calculate_final_savings received NoneType input.")
                 raise HTTPException(
                     status_code=400,
                     detail="Cost values cannot be None"

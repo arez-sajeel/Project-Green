@@ -473,14 +473,13 @@ def test_calculate_final_savings_none_input(engine):
     with pytest.raises(HTTPException) as e:
         engine.calculate_final_savings(cost_before, cost_after)
 
-    assert e.value.status.code == 400
+    assert e.value.status_code == 400
     assert "cannot be None" in e.value.detail
 
-def test_calculate_final_savings_none_input(engine):
+def test_calculate_final_savings_invalid_type(engine):
     """
-    Validates that method correctly computes savings, updates internal state,
-    and returns the expected value when there is no input
-    Should raise an HTTPException
+    Validates that method correctly handles non-numeric input types.
+    Should raise an HTTPException with status 400.
     """
     # GIVEN:
     cost_before = "invalid"
@@ -490,7 +489,7 @@ def test_calculate_final_savings_none_input(engine):
     with pytest.raises(HTTPException) as e:
         engine.calculate_final_savings(cost_before, cost_after)
 
-    assert e.value.status.code == 400
+    assert e.value.status_code == 400
     assert "must be numeric" in e.value.detail
 
 # --- END OF NEW TESTS (Sprint 4.1)
