@@ -10,13 +10,15 @@
 #   by loading, transforming, and simulating portfolio data.
 # ---
 
-import pandas as pd
-from typing import List, Dict, Any, Optional
+import csv
 import sys
 from datetime import datetime
+import pandas as pd  
 
-# NEW (Sprint 2): Import our Pydantic model
-from backend.models.usage import HistoricalUsageLog
+from typing import List, Dict, Any, Optional
+
+from models.usage import HistoricalUsageLog   
+
 
 # Per P3, a custom error for clarity
 class DataLoadError(Exception):

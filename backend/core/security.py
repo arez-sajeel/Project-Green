@@ -11,6 +11,8 @@
 #   *full* user model (Homeowner/PropertyManager) for NFR-S2.
 # ---
 
+# backend/core/security.py
+
 import os
 import bcrypt
 from datetime import datetime, timedelta, timezone
@@ -20,12 +22,15 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import ValidationError
 from typing import Union, Optional
-
-# Use absolute imports
-from backend.data_access.database import get_db, get_user_by_email
-from backend.models.property import Homeowner, PropertyManager
-from backend.models.user import UserInDB
 from motor.motor_asyncio import AsyncIOMotorDatabase
+
+# -------------------------------------------------
+# FIXED IMPORTS (NO MORE: from backend....)
+# -------------------------------------------------
+from data_access.database import get_db, get_user_by_email
+from models.property import Homeowner, PropertyManager
+from models.user import UserInDB
+# -------------------------------------------------
 
 # Load environment variables
 load_dotenv()
@@ -37,7 +42,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY not set in .env file")
 
-# --- Password Hashing Functions (using bcrypt directly) ---
+# --- Password Hashing Functions ---
 
 def hash_password(password: str) -> str:
     """Hashes a plain-text password using bcrypt."""
@@ -59,10 +64,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 # --- JSON Web Token (JWT) Functions ---
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
-    """
-    Creates a new JSON Web Token (JWT).
-    Accepts an 'expires_delta' to set expiry time.
-    """
+    """Creates a JWT using SECRET_KEY + ALGORITHM."""
     to_encode = data.copy()
     
     if expires_delta:
@@ -74,13 +76,12 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+# -------------------------------------------------
+# NEW (Sprint 2): Authentication Dependency
+# -------------------------------------------------
 
-# --- NEW (Sprint 2): Authentication Dependency ---
-
-# This tells FastAPI where to look for the token ("tokenUrl" is relative)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-# Define a type hint for the full user models
 FullUserType = Union[Homeowner, PropertyManager, UserInDB]
 
 async def get_current_active_user(
@@ -88,15 +89,8 @@ async def get_current_active_user(
     db: AsyncIOMotorDatabase = Depends(get_db)
 ) -> FullUserType:
     """
-    The primary authentication dependency for protected endpoints.
-    
-    1. Decodes the JWT from the "Authorization: Bearer <token>" header.
-    2. Extracts the user's email ('sub').
-    3. Fetches the *full* user model (Homeowner, PropertyManager, or UserInDB) from the DB.
-    
-    This satisfies NFR-S2 by providing the user's role and associated
-    property_id/portfolio_id for data access control.
-    UserInDB is returned for users who haven't completed role selection.
+    Decodes JWT, extracts email (sub), fetches full user model
+    (Homeowner / PropertyManager / UserInDB).
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -104,23 +98,20 @@ async def get_current_active_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     
+    # 1. Decode JWT
     try:
-        # 1. Decode JWT
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
             
-    except JWTError:
-        raise credentials_exception
-    except ValidationError:
+    except (JWTError, ValidationError):
         raise credentials_exception
         
-    # 2. Fetch Full User Model from DB
+    # 2. Load full user model from DB
     user = await get_user_by_email(db, email=email)
     
     if user is None:
         raise credentials_exception
         
-    # 3. Return the full Homeowner or PropertyManager model
     return user
