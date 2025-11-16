@@ -7,6 +7,7 @@
 
 from pydantic import BaseModel, EmailStr
 from enum import Enum
+from typing import Optional
 
 # Defines the roles available in the system.
 # This is crucial for NFR-S2 (Role-Based Access Control).
@@ -21,7 +22,7 @@ class UserBase(BaseModel):
     Contains common information that is validated for both input and output.
     """
     email: EmailStr  # Ensures the email provided is a valid email format
-    role: UserRole   # Enforces that the role must be one of the UserRole enum values
+    role: Optional[UserRole] = None   # Optional role - users can register without selecting a role initially
 
 class UserCreate(UserBase):
     """

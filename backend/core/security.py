@@ -24,6 +24,7 @@ from typing import Union, Optional
 # Use absolute imports
 from backend.data_access.database import get_db, get_user_by_email
 from backend.models.property import Homeowner, PropertyManager
+from backend.models.user import UserInDB
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 # Load environment variables
@@ -80,7 +81,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 # Define a type hint for the full user models
-FullUserType = Union[Homeowner, PropertyManager]
+FullUserType = Union[Homeowner, PropertyManager, UserInDB]
 
 async def get_current_active_user(
     token: str = Depends(oauth2_scheme),
@@ -91,10 +92,11 @@ async def get_current_active_user(
     
     1. Decodes the JWT from the "Authorization: Bearer <token>" header.
     2. Extracts the user's email ('sub').
-    3. Fetches the *full* user model (Homeowner or PropertyManager) from the DB.
+    3. Fetches the *full* user model (Homeowner, PropertyManager, or UserInDB) from the DB.
     
     This satisfies NFR-S2 by providing the user's role and associated
     property_id/portfolio_id for data access control.
+    UserInDB is returned for users who haven't completed role selection.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

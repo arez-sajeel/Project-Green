@@ -1,0 +1,76 @@
+.pm-container {
+  padding: 20px;
+  background: #f5f5e9;
+  min-height: 100vh;
+}
+
+.pm-header {
+  background: #2e8b57;
+  color: white;
+  padding: 20px;
+  border-radius: 0 0 20px 20px;
+  font-size: 24px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.pm-section h3 {
+  margin-bottom: 10px;
+}
+
+.pm-prop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pm-prop-card {
+  padding: 10px;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pm-prop-icon {
+  background: #6f42c1;
+  color: white;
+  padding: 12px;
+  border-radius: 50%;
+}
+
+.pm-prop-text small {
+  color: #666;
+}
+
+.pm-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pm-error {
+  color: red;
+  margin-top: -5px;
+  font-size: 14px;
+}
+
+.pm-btn {
+  background: #444;
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.pm-connect-btn {
+  background: #2e8b57;
+  color: white;
+  padding: 15px;
+  width: 100%;
+  border-radius: 8px;
+  margin-top: 15px;
+  font-weight: bold;
+  font-size: 16px;
+}

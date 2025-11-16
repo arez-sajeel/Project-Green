@@ -23,6 +23,7 @@ import typing # Added for type casting
 #
 from backend.models.user import UserCreate, UserInDB, Token, UserRole
 from backend.models.property import Homeowner, PropertyManager # Import full models
+from typing import Optional
 from backend.data_access.database import get_db, get_user_by_email, create_user
 from backend.core.security import (
     hash_password, 
@@ -79,6 +80,7 @@ async def register_user(
         #
         # FIX 2: Create the *full* user model, not just UserInDB
         # This is required for our new `get_user_by_email` to work
+        # Allow null role for users who haven't completed role selection
         #
         if user_in.role == UserRole.HOMEOWNER:
             # We add a placeholder property_id for new signups
@@ -88,11 +90,17 @@ async def register_user(
             # We add a placeholder portfolio_id for new signups
             user_db_data.setdefault("portfolio_id", 888) # Placeholder
             user_db = PropertyManager(**user_db_data)
+        elif user_in.role is None or user_in.role == "":
+            # User hasn't selected a role yet - create basic UserInDB
+            user_db = UserInDB(**user_db_data)
         else:
              raise HTTPException(status_code=400, detail="Invalid user role")
 
-        # 4. Create User Record in MongoDB
-        success = await create_user(db, user_db)
+        # 4. Create User Record in MongoDB - insert as dict to avoid validation issues
+        users_collection = db["users"]
+        user_dict = user_db.model_dump() if hasattr(user_db, 'model_dump') else user_db.dict()
+        result = await users_collection.insert_one(user_dict)
+        success = result.inserted_id is not None
         
         if not success:
             raise HTTPException(
@@ -151,4 +159,87 @@ async def login_for_access_token(
     
     # 5. Return 200 OK & JWT
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+# --- Get Current User Endpoint ---
+
+@router.get("/me")
+async def get_current_user_info(
+    current_user: typing.Union[Homeowner, PropertyManager, UserInDB] = Depends(get_current_active_user)
+):
+    """
+    Returns the current authenticated user's information.
+    Used to check if user has completed role selection.
+    """
+    return {
+        "email": current_user.email,
+        "role": current_user.role if hasattr(current_user, 'role') else None,
+        "property_id": getattr(current_user, "property_id", None),
+        "portfolio_id": getattr(current_user, "portfolio_id", None)
+    }
+
+
+# --- Update User Role Endpoint ---
+
+@router.put("/update-role")
+async def update_user_role(
+    role_data: dict,
+    current_user: typing.Union[Homeowner, PropertyManager, UserInDB] = Depends(get_current_active_user),
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
+    """
+    Updates the user's role after they complete role selection.
+    This is used when a user registers but doesn't complete role selection.
+    """
+    try:
+        new_role = role_data.get("role")
+        
+        if not new_role:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Role is required"
+            )
+        
+        # Validate role
+        if new_role not in [UserRole.HOMEOWNER, UserRole.PROPERTY_MANAGER]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid role. Must be 'Homeowner' or 'PropertyManager'"
+            )
+        
+        # Update user role in database and add required fields
+        users_collection = db["users"]
+        update_fields = {"role": new_role}
+        
+        # Add required fields based on role
+        if new_role == UserRole.HOMEOWNER:
+            update_fields["property_id"] = 999  # Placeholder property_id
+        elif new_role == UserRole.PROPERTY_MANAGER:
+            update_fields["portfolio_id"] = 888  # Placeholder portfolio_id
+        
+        result = await users_collection.update_one(
+            {"email": current_user.email},
+            {"$set": update_fields}
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update user role"
+            )
+        
+        return {
+            "message": "Role updated successfully",
+            "email": current_user.email,
+            "role": new_role
+        }
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        print(f"Error in /update-role endpoint: {e}", file=sys.stderr)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An internal server error occurred: {e}"
+        )
 

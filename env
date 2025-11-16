@@ -1,0 +1,6 @@
+
+MONGODB_URL="mongodb+srv://geo_dev:qTlVw59y6TDbyNVp@projectgreenauth.pnvqi9a.mongodb.net/geo_db?appName=projectGreenAuth"
+
+SECRET_KEY="f1d2d2f924e986ac86fdf7b36c94bcdf92eb2d156150f1b74a05d713e87d2c3e"
+ALGORITHM="HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES=30 # This just means whenever a user signs in, they will be signed out after 30 minutes, its a best practise for security and matches our non-func requirements.
