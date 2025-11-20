@@ -1,7 +1,8 @@
 // src/pages/Register.jsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
+import { registerUser, saveToken } from "../services/authService";
 
 export default function Register() {
   const [fullName, setFullName] = useState("");
@@ -9,8 +10,9 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
@@ -23,16 +25,52 @@ export default function Register() {
       return;
     }
 
-    // UI-only: pretend to send request
     setLoading(true);
-    setTimeout(() => {
-      console.log("Register submitted (UI only)", {
-        fullName,
-        email,
-        password,
+
+    // Register user without a role - they must select it on the next page
+    try {
+      const response = await fetch('http://localhost:8000/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          // Don't include role - user must select on role page
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        // If email exists, show error and don't proceed
+        if (response.status === 409) {
+          setError("A user with this email already exists.");
+          setLoading(false);
+          return;
+        }
+        setError(errorData.detail || "Registration failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // Registration successful - store token and redirect to role selection
+      const data = await response.json();
+      saveToken(data.access_token);
+      
+      // Clear form fields
+      setEmail("");
+      setPassword("");
+      setFullName("");
+      
+      // Redirect to role selection - user MUST select a role to continue
+      navigate("/role");
+      
+    } catch (err) {
+      setError("Registration failed. Please try again.");
+    } finally {
       setLoading(false);
-    }, 700);
+    }
   }
 
   return (
@@ -68,8 +106,7 @@ export default function Register() {
         {error && <p className="auth-error">{error}</p>}
 
         <button className="auth-button-primary" disabled={loading} type="submit">
-          {loading ? "Creating..." : "Login"}
-          {/* If you want the button text to be "Sign up" instead, change here */}
+          {loading ? "Creating..." : "Sign up"}
         </button>
       </form>
 

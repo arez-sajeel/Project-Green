@@ -1,0 +1,32 @@
+{
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.17"
+  },
+  "name": "project-green",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arez-sajeel/Project-Green.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/arez-sajeel/Project-Green/issues"
+  },
+  "homepage": "https://github.com/arez-sajeel/Project-Green#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "mongodb": "^7.0.0"
+  }
+}
