@@ -380,18 +380,21 @@ def test_calculate_final_savings_none_input(engine):
     Validates NFR-S3 error handling for None input.
     """
     with pytest.raises(HTTPException) as e:
-        engine.calculate_final_savings(None, 120.0)
-    assert e.value.status_code == 400
+        engine.calculate_final_savings(cost_before, cost_after)
+
+    assert e.value.status.code == 400
     assert "cannot be None" in e.value.detail
 
-
-def test_calculate_final_savings_invalid_type(engine):
+def test_calculate_final_savings_none_input(engine):
     """
-    Validates P3 error handling for non-numeric input.
+    Validates that method correctly computes savings, updates internal state,
+    and returns the expected value when there is no input
+    Should raise an HTTPException
     """
     with pytest.raises(HTTPException) as e:
-        engine.calculate_final_savings("invalid", 120.0)
-    assert e.value.status_code == 400
+        engine.calculate_final_savings(cost_before, cost_after)
+
+    assert e.value.status.code == 400
     assert "must be numeric" in e.value.detail
 
 
@@ -490,4 +493,5 @@ def test_structure_report_output_happy_path(engine, peak_time, off_peak_time):
     assert report.predicted_usage_curve[0].kwh_cost == 37.5
 
 
-# --- END OF NEW TESTS (SPRINT 4.2) ---
+# --- END OF NEW TESTS (SPRINT 4.2) --- # 
+
