@@ -224,3 +224,35 @@ body {
     width: 90%;
   }
 }
+
+.summary-card {
+  background: #eee;
+  padding: 1rem;
+  border-radius: 12px;
+  flex: 1;
+  min-width: 140px;
+  text-align: center;
+}
+
+.summary-title {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.summary-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.toggle-btn {
+  padding: 0.5rem 1.2rem;
+  border-radius: 10px;
+  border: none;
+  background: #ddd;
+  font-weight: 600;
+}
+
+.toggle-btn.active {
+  background: #B158E0;
+  color: white;
+}
