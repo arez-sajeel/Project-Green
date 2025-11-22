@@ -1,0 +1,29 @@
+
+.usage-container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+.usage-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.usage-table th, .usage-table td {
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: left;
+}
+
+.sort-button, .back-button {
+  margin-top: 15px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.error-message {
+  color: #b00020;
+  font-weight: bold;
+}
